@@ -883,7 +883,7 @@ function mainAction(){
 function confirmShowAll(){
 
     showConfirm(
-        "确定要跳转到身份表，而不展示剩余玩家身份吗？",
+        "身份还未分发完毕，现在查看身份表将不展示剩余玩家身份",
         function(){
 
             showIdentityTable();
@@ -920,7 +920,7 @@ function toggleDead(index){
     if(deadPlayers.has(index)){
 
         showConfirm(
-            "要移除"+(index+1)+"号玩家的出局标记？",
+            "将移除"+(index+1)+"号玩家的出局标记",
             function(){
 
                 deadPlayers.delete(index);
@@ -932,7 +932,7 @@ function toggleDead(index){
     }else{
 
         showConfirm(
-            (index+1)+"号玩家将标记为出局",
+            (index+1)+"号玩家将被标记为出局",
             function(){
 
                 deadPlayers.add(index);
@@ -1106,7 +1106,7 @@ onclick="confirmStartVote()">
         html+=`
         <button
         class="bottomCapsuleBtn gold fixedBottomBtn"
-        style="font-size:34px;margin-top:30px"
+        style="font-size:30px !important;margin-top:30px"
         onclick="confirmRestart()">
         ↻
         </button>
@@ -1121,7 +1121,7 @@ onclick="confirmStartVote()">
 function confirmStartVote(){
 
     showConfirm(
-        "要进入投票环节？",
+        "将进入投票环节",
         function(){
 
             startVote();
@@ -1164,11 +1164,7 @@ function renderVoteSelectPage(){
         }
         "
         ${done?'disabled':''}
-        onclick="showConfirm(
-'将进入${v}号玩家投票页',
-function(){
-openVotePlayer(${v});
-})">
+        onclick="openVotePlayer(${v})">
         ${v}号玩家
         </button>
         `;
@@ -1205,7 +1201,7 @@ function checkVoteResult(){
     }
 
     showConfirm(
-        "要查看投票结果吗？",
+        "将显示投票结果",
         function(){
             finishVoting();
         }
@@ -1505,7 +1501,7 @@ if(isPKVote){
         html+=`
         <button
         class="bottomCapsuleBtn blue fixedBottomBtn voteBtnCapsule"
-        style="font-size:34px;margin-top:30px"
+        style="font-size:30px !important;margin-top:30px"
         onclick="applyVoteOut()">
         ←
         </button>
@@ -1518,7 +1514,7 @@ if(isPKVote){
             html+=`
             <button
             class="bottomCapsuleBtn blue fixedBottomBtn voteBtnCapsule"
-            style="font-size:29px;margin-top:30px"
+            style="font-size:30px !important;margin-top:30px"
             onclick="showIdentityTable()">
             ←
             </button>
@@ -1540,7 +1536,7 @@ if(isPKVote){
         html+=`
         <button
         class="bottomCapsuleBtn blue fixedBottomBtn voteBtnCapsule"
-        style="font-size:34px;margin-top:30px"
+        style="font-size:30px !important;margin-top:30px"
         onclick="showIdentityTable()">
         ←
         </button>
