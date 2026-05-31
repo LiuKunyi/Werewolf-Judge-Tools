@@ -496,13 +496,8 @@ select option{
     position:fixed;
     left:50%;
     transform:translateX(-50%);
-    bottom:3mm;
+    bottom:calc(env(safe-area-inset-bottom) + 18px);
     z-index:20;
-}
-
-
-.voteBtnFix{
-    bottom:18px !important;
 }
 
 .bottomSpacer{
@@ -531,7 +526,6 @@ select option{
     -webkit-tap-highlight-color:transparent;
 }
 .pressing{
-    transform:scale(0.95);
     filter:brightness(.85);
 }
 
@@ -650,19 +644,18 @@ const allRoles=[
 
 "平民",
 "预言家","女巫","守卫","猎人","愚者","骑士",
-"摄梦人","守墓人","乌鸦","猎魔人",
-"奇迹商人","守夜人","定序王子",
-"魔术师","禁言长老","狐狸","熊","长老","替罪羊",
+"摄梦人","守墓人","猎魔人",
+"奇迹商人","定序王子",
+"魔术师","禁言长老","狐狸","熊","替罪羊",
 
-"狼人","狼王","白狼王","黑狼王",
+"狼人","狼王","白狼王",
 "狼美人","机械狼","石像鬼","梦魇","血月使徒","恶魔","隐狼",
 
 "丘比特","混血儿","野孩子","咒狐"
 ];
 
 const evilRoles=[
-"狼人","狼王","白狼王","黑狼王",
-"狼美人","机械狼","石像鬼","梦魇","血月使徒",
+"狼人","狼王","白狼王","狼美人","机械狼","石像鬼","梦魇","血月使徒",
 "恶魔","隐狼","自爆狼"
 ];
 
@@ -760,10 +753,75 @@ function getFactionStats(){
 
 const godRoles=[
     "预言家","女巫","守卫","猎人","骑士","愚者",
-    "乌鸦","守墓人","摄梦人","猎魔人","奇迹商人",
-    "守夜人","定序王子","魔术师","禁言长老",
-    "狐狸","熊","长老","替罪羊"
+    "守墓人","摄梦人","猎魔人","奇迹商人",
+    "定序王子","魔术师","禁言长老",
+    "狐狸","熊","替罪羊"
     ];
+
+function getNightOrderText(){
+
+    const order=[];
+
+    if(night===1 && identities.includes("丘比特"))
+        order.push("丘比特");
+
+    if(night===1 && identities.includes("野孩子"))
+        order.push("野孩子");
+
+    if(night===1 && identities.includes("混血儿"))
+        order.push("混血儿");
+
+    if(identities.includes("魔术师"))
+        order.push("魔术师");
+
+    if(identities.includes("奇迹商人"))
+        order.push("奇迹商人");
+
+    if(identities.includes("梦魇"))
+        order.push("梦魇");
+
+    if(identities.includes("摄梦人"))
+        order.push("摄梦人");
+
+    if(identities.includes("狼美人"))
+        order.push("狼美人");
+
+    if(identities.includes("机械狼"))
+        order.push("机械狼");
+
+    if(identities.includes("禁言长老"))
+        order.push("禁言长老");
+
+    if(identities.includes("守卫"))
+        order.push("守卫");
+
+    if(identities.some(r=>evilRoles.includes(r)))
+        order.push("狼人");
+
+    if(identities.includes("女巫"))
+        order.push("女巫");
+
+    if(identities.includes("预言家"))
+        order.push("预言家");
+
+    if(identities.includes("猎人"))
+        order.push("猎人");
+
+    if(identities.includes("狼王"))
+        order.push("狼王");
+
+    return `
+    <div style="
+    text-align:center;
+    margin-top:12px;
+    margin-bottom:12px;
+    color:#d0d0d0;
+    line-height:1.7;
+    ">
+    ${order.join(" → ")}
+    </div>
+    `;
+}
 
 function getRoleCounts(){
 
@@ -886,8 +944,8 @@ function rebuildRoleOptions(){
 select.innerHTML="";
 
 const groups=[
-["好人阵营",["平民","预言家","女巫","守卫","猎人","愚者","骑士","摄梦人","守墓人","乌鸦","猎魔人","奇迹商人","守夜人","定序王子","魔术师","禁言长老","狐狸","熊","长老","替罪羊"]],
-["狼人阵营",["狼人","狼王","白狼王","黑狼王","狼美人","机械狼","石像鬼","梦魇","血月使徒","恶魔","隐狼"]],
+["好人阵营",["平民","预言家","女巫","守卫","猎人","愚者","骑士","摄梦人","守墓人","猎魔人","奇迹商人","定序王子","魔术师","禁言长老","狐狸","熊","替罪羊"]],
+["狼人阵营",["狼人","狼王","白狼王","狼美人","机械狼","石像鬼","梦魇","血月使徒","恶魔","隐狼"]],
 ["第三方阵营",["丘比特","混血儿","野孩子","咒狐"]]
 ];
 
@@ -966,6 +1024,8 @@ function addRole(){
     }
 
     createRoleRow(available[0],1);
+
+    rebuildRoleOptions();
 }
 
 function loadPreset(){
@@ -1327,7 +1387,15 @@ function getWinText(){
 
     const hasVillager=identities.some(r=>r==="平民");
 
-    if(wolf>0 && wolf >= (god + villager)){
+    const antiControlRoles=["女巫","骑士","摄梦人","猎魔人"];
+
+    const hasAntiControlRole=identities.some((role,i)=>
+        !deadPlayers.has(i) &&
+        getFactionAtIndex(i)==="好人" &&
+        antiControlRoles.includes(role)
+    );
+
+    if(wolf>0 && wolf >= (god + villager) && !hasAntiControlRole){
 
         if(curseFoxAlive){
             return '<div class="player" style="color:#d0d0d0">第三方胜利</div>';
@@ -1421,8 +1489,6 @@ function buildMarkControl(index){
     options+=`<option value="🧪" ${cur==="🧪"?"selected":""}>🧪 女巫目标</option>`;
     if(identities.includes("摄梦人"))
     options+=`<option value="💤" ${cur==="💤"?"selected":""}>💤 摄梦目标</option>`;
-    if(identities.includes("乌鸦"))
-    options+=`<option value="🪶" ${cur==="🪶"?"selected":""}>🪶 乌鸦目标</option>`;
     if(identities.includes("狼美人"))
     options+=`<option value="🌹" ${cur==="🌹"?"selected":""}>🌹 狼美人目标</option>`;
     if(identities.includes("梦魇"))
@@ -1471,14 +1537,16 @@ function showIdentityTable(){
     });
 
     let html=getWinText();
-
-    html+=getFactionStats();
-
-    html+=`
-    <div class="pageSubTitle">
-    身份表
-    </div>
-    `
+    
+	html+=getFactionStats();
+	
+	html+=getNightOrderText();
+	
+	html+=`
+	<div class="pageSubTitle">
+	身份表
+	</div>
+	`;
 
     const canEditFaction=identities.some(role=>["丘比特","混血儿","野孩子"].includes(role));
 
@@ -1612,10 +1680,23 @@ function showDeathSettlementPage(){
     });
 
     html+='</table><div class="bottomSpacer"></div>';
-    html+=`<button class="bottomCapsuleBtn blue fixedBottomBtn"
-    onclick="confirmEnterSpeech()">
-    发言
-    </button>`;
+
+    if(getWinText()){
+
+        html+=`<button
+        class="bottomCapsuleBtn gold fixedBottomBtn"
+        style="font-size:30px !important"
+        onclick="confirmRestart()">
+        ↻
+        </button>`;
+
+    }else{
+
+        html+=`<button class="bottomCapsuleBtn blue fixedBottomBtn"
+        onclick="confirmEnterSpeech()">
+        发言
+        </button>`;
+    }
 
     document.getElementById("result").innerHTML=html;
 }
@@ -2156,9 +2237,19 @@ ${flowRows}
 
     <div class="bottomSpacer"></div>
     `;
-    
 
-    if(maxPlayers.length===1 && maxVote>0){
+    if(getWinText()){
+
+        html+=`
+        <button
+        class="bottomCapsuleBtn gold fixedBottomBtn"
+        style="font-size:30px !important"
+        onclick="confirmRestart()">
+        ↻
+        </button>
+        `;
+
+    }else if(maxPlayers.length===1 && maxVote>0){
 
 
         html+=`
