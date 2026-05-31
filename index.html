@@ -15,6 +15,8 @@ body{
     font-family:Arial;
     display:flex;
     justify-content:center;
+    -webkit-user-select:none;
+    user-select:none;
 }
 
 .container{
@@ -23,11 +25,13 @@ body{
     background:#2a2d3d;
     padding:20px;
     border-radius:18px;
+    position:relative;
 }
 
 h1{
     text-align:center;
     font-size:40px;
+    font-weight:bold;
     margin-bottom:20px;
 }
 
@@ -128,16 +132,33 @@ button{
 .whiteText{color:white;}
 .redText{color:#954d4d;}
 .greenText{color:#628167;}
+.thirdText{color:#d0d0d0;}
 .yellowText{color:#b59b60;}
 
 .hidden{
     display:none;
 }
 
+#miniHeader{
+    position:absolute;
+    top:14px;
+    left:18px;
+
+    display:flex;
+    align-items:center;
+
+    font-size:18px;
+    font-weight:normal;
+
+    color:white;
+
+    z-index:20;
+}
+
 table{
     width:100%;
     border-collapse:collapse;
-    margin-top:16px;
+    margin-top:6px;
     table-layout:fixed;
 }
 
@@ -177,11 +198,137 @@ th,td{
     border-color:#777;
 }
 
+.numberCell{
+    position:relative;
+    text-align:center;
+}
+.numberCell .deadBtn{
+    position:absolute;
+    left:8px;
+    top:50%;
+    transform:translateY(-50%);
+    margin:0;
+}
+.playerNum{
+    display:block;
+    width:100%;
+    text-align:center;
+}
+.markWrap{
+    position:absolute;
+    right:6px;
+    top:50%;
+    transform:translateY(-50%);
+    width:32px;
+    height:34px;
+}
+.markDisplay{
+    position:absolute;
+    inset:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:22px;
+    pointer-events:none;
+}
+.markSelect{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    opacity:0;
+    cursor:pointer;
+}
+
+.voteNumberCell{
+    position:relative;
+    text-align:center;
+}
+.voteFactionMark{
+    position:absolute;
+    left:8px;
+    top:50%;
+    transform:translateY(-50%);
+    line-height:1;
+}
+.voteFactionMark.gray{
+    color:#777;
+}
+.votePlayerNum{
+    display:block;
+    width:100%;
+    text-align:center;
+}
+
+.roleCell{
+    position:relative;
+    text-align:center;
+}
+.roleText{
+    display:block;
+    text-align:center;
+}
+.factionMark{
+    position:absolute;
+    right:12px;
+    top:50%;
+    transform:translateY(-50%);
+    line-height:1;
+}
+.factionMark.gray{
+    color:#777;
+}
+
+
 .voteGrid{
     display:grid;
     grid-template-columns:repeat(3,1fr);
     gap:12px;
     margin-top:20px;
+}
+
+.voteFlowTable{
+    margin:0 auto;
+    border-collapse:collapse;
+    width:auto;
+    display:inline-table;
+}
+
+.voteFlowTable{
+    margin:0 auto;
+    border-collapse:collapse;
+}
+
+.voteFlowTable td{
+    border:none;
+    padding:3px 8px;
+    font-size:inherit;
+}
+
+.voteFlowTable tr:not(:last-child){
+    border-bottom:1px solid rgba(255,255,255,0.25);
+}
+
+.flowFrom{
+    text-align:right;
+}
+
+.flowArrow{
+    text-align:center;
+    padding-left:12px !important;
+    padding-right:12px !important;
+}
+
+.flowTo{
+    text-align:center;
+    padding-right:12px !important;
+}
+
+.flowCount{
+    text-align:left;
+    padding-left:12px !important;
+    padding-right:2px !important;
+    border-left:1px solid rgba(255,255,255,0.35) !important;
 }
 
 .voteBtn{
@@ -264,7 +411,14 @@ select option{
     color:white;
 }
 
+.pageSubTitle{
+    text-align:center;
+    font-size:28px;
+    color:#cfcfcf;
 
+    margin-top:0;
+    margin-bottom:4px;
+}
 
 
 .voteBtnCapsule{
@@ -346,6 +500,29 @@ select option{
     height:calc(50px + 6mm);
 }
 
+
+.mainBtn:active,
+.addBtn:active,
+.voteBtn:active{
+    transform:scale(0.95);
+    filter:brightness(.85);
+}
+
+.bottomCapsuleBtn:active{
+    filter:brightness(.85);
+}
+
+.mainBtn,
+.addBtn,
+.voteBtn,
+.bottomCapsuleBtn{
+    transition:
+        transform .08s ease,
+        filter .08s ease;
+    -webkit-tap-highlight-color:transparent;
+}
+
+
 </style>
 </head>
 
@@ -354,20 +531,11 @@ select option{
 <div class="container">
 
 
-<h1>狼人杀</h1>
+<h1 id="mainTitle">配置本局身份</h1>
 
-<div id="subTitle"
-style="
-text-align:center;
-font-size:28px;
-margin-top:-8px;
-margin-bottom:24px;
-color:#cfcfcf;
-display:none;
-">
-身份表
+<div id="miniHeader">
+🐺 狼人杀
 </div>
-
 
 <div id="setupPage">
 
@@ -444,6 +612,11 @@ box-sizing:border-box;
 </div>
 
 <script>
+
+document.addEventListener("copy",e=>e.preventDefault());
+document.addEventListener("cut",e=>e.preventDefault());
+document.addEventListener("contextmenu",e=>e.preventDefault());
+
 window.addEventListener("beforeunload",function(e){
     e.preventDefault();
     e.returnValue="";
@@ -463,24 +636,27 @@ function showConfirm(text,yesCallback){
 
 const allRoles=[
 
-"平民","狼人","狼王","白狼王",
-"预言家","女巫","守卫","猎人",
-"骑士","恶魔","自爆狼",
-"狼美人","黑狼王","白痴",
-"乌鸦","守墓人","摄梦人",
-"丘比特","魔术师","奇迹商人"
+"平民",
+"预言家","女巫","守卫","猎人","愚者","骑士",
+"摄梦人","守墓人","乌鸦","猎魔人",
+"奇迹商人","守夜人","定序王子",
+"魔术师","禁言长老","狐狸","熊","长老","替罪羊",
+
+"狼人","狼王","白狼王","黑狼王",
+"狼美人","机械狼","石像鬼","梦魇","血月使徒","恶魔","隐狼",
+
+"丘比特","混血儿","野孩子","咒狐"
 ];
 
 const evilRoles=[
-"狼人","狼王","白狼王",
-"恶魔","自爆狼","狼美人","黑狼王"
+"狼人","狼王","白狼王","黑狼王",
+"狼美人","机械狼","石像鬼","梦魇","血月使徒",
+"恶魔","隐狼","自爆狼"
 ];
 
 let identities=[];
 let currentPlayer=1;
 let state="view";
-
-    document.getElementById("result").innerHTML="";
 let deadPlayers=new Set();
 
 let votes={};
@@ -490,12 +666,148 @@ let selectedVote=null;
 let votedOutPlayer=null;
 let pkPlayers=null;
 let isPKVote=false;
+let playerFaction=[];
+let playerBaseFaction=[];
+let night=1;
+let speechTimer=null;
+let speechSeconds=0;
+let nightMarks={};
+let manualNightDeaths=[];
+let settlementText='昨晚是平安夜';
+let permanentMarked=new Set();
+let currentPage="identity";
 
 const thirdPartyRoles=[
-"丘比特",
-"魔术师",
-"奇迹商人"
+"丘比特","混血儿","野孩子","咒狐"
 ];
+
+function setPhaseTitle(text){
+
+    document.getElementById("mainTitle")
+    .innerText=text;
+}
+
+function factionSymbol(faction,gray=false){
+
+    const color=gray?'#777777':(faction==="狼人"?'#954d4d':faction==="第三方"?'#d0d0d0':'#628167');
+    const sym=faction==="狼人"?'▼':faction==="第三方"?'▣':'▲';
+    return '<span style="color:'+color+'">'+sym+'</span>';
+}
+
+function roleToFaction(role){
+    return ["丘比特","混血儿","野孩子","咒狐"].includes(role)
+        ? "第三方"
+        : evilRoles.includes(role)
+            ? "狼人"
+            : "好人";
+}
+
+function roleToBaseFaction(role){
+    return evilRoles.includes(role) ? "狼人" : "好人";
+}
+
+function getFactionAtIndex(index){
+
+    return playerFaction[index] || roleToFaction(identities[index]||"");
+}
+
+function getFactionCounts(){
+
+    let good=0,wolf=0,third=0;
+
+    identities.forEach((role,i)=>{
+
+        if(deadPlayers.has(i)) return;
+
+        const faction=getFactionAtIndex(i);
+
+        if(faction==="狼人") wolf++;
+        else if(faction==="第三方") third++;
+        else good++;
+    });
+
+    return {good,wolf,third};
+}
+
+function getFactionStats(){
+
+    const {good,wolf,third}=getFactionCounts();
+
+    return `
+    <div style="
+    text-align:center;
+    margin-top:8px;
+    margin-bottom:12px;
+    color:#d0d0d0;
+    line-height:1.7;
+    ">
+    第${night}晚｜好人${good}｜狼人${wolf}${third>0?`｜第三方${third}`:""}
+    </div>
+    `;
+}
+
+const godRoles=[
+    "预言家","女巫","守卫","猎人","骑士","愚者",
+    "乌鸦","守墓人","摄梦人","猎魔人","奇迹商人",
+    "守夜人","定序王子","魔术师","禁言长老",
+    "狐狸","熊","长老","替罪羊"
+    ];
+
+function getRoleCounts(){
+
+    let wolf=0,god=0,villager=0,third=0;
+
+
+    identities.forEach((role,i)=>{
+
+        if(deadPlayers.has(i)) return;
+
+        const faction=getFactionAtIndex(i);
+
+        if(faction==="第三方"){
+            third++;
+            return;
+        }
+
+        if(faction==="狼人"){
+            wolf++;
+            return;
+        }
+
+        if(role==="平民"){
+            villager++;
+        }else{
+            god++;
+        }
+    });
+
+    return {wolf,god,villager,third};
+}
+
+function cycleFaction(index){
+
+    const role=identities[index];
+    const current=getFactionAtIndex(index);
+    let next;
+
+    if(role==="丘比特"){
+        if(night!==1) return;
+        next=current==="第三方"?"好人":current==="好人"?"狼人":"第三方";
+    }else if(role==="混血儿"){
+        if(night!==1) return;
+        next=current==="第三方"?"好人":current==="好人"?"狼人":"好人";
+    }else if(role==="野孩子"){
+        next=current==="第三方"?"好人":current==="好人"?"狼人":"好人";
+    }else{
+        if(!(night===1 && identities.includes("丘比特"))) return;
+        next=current==="第三方" ? roleToBaseFaction(role) : "第三方";
+    }
+
+    showConfirm("将切换"+(index+1)+"号玩家的阵营为"+next,function(){
+        playerFaction[index]=next;
+        showIdentityTable();
+    });
+}
 
 
 function getUsedRoles(){
@@ -558,29 +870,29 @@ function rebuildRoleOptions(){
 
         const select=row.querySelector("select");
 
-        select.innerHTML="";
+        
+select.innerHTML="";
 
-        allRoles.forEach(role=>{
+const groups=[
+["好人阵营",["平民","预言家","女巫","守卫","猎人","愚者","骑士","摄梦人","守墓人","乌鸦","猎魔人","奇迹商人","守夜人","定序王子","魔术师","禁言长老","狐狸","熊","长老","替罪羊"]],
+["狼人阵营",["狼人","狼王","白狼王","黑狼王","狼美人","机械狼","石像鬼","梦魇","血月使徒","恶魔","隐狼"]],
+["第三方阵营",["丘比特","混血儿","野孩子","咒狐"]]
+];
 
-            if(
-                role===current
-                ||
-                !usedElsewhere.includes(role)
-            ){
-
-                const option=document.createElement("option");
-
-                option.value=role;
-                option.textContent=role;
-
-                if(role===current){
-
-                    option.selected=true;
-                }
-
-                select.appendChild(option);
-            }
-        });
+groups.forEach(g=>{
+const opt=document.createElement("optgroup");
+opt.label=g[0];
+g[1].forEach(role=>{
+if(role===current || !usedElsewhere.includes(role)){
+const option=document.createElement("option");
+option.value=role;
+option.textContent=role;
+if(role===current) option.selected=true;
+opt.appendChild(option);
+}
+});
+select.appendChild(opt);
+});
     });
 }
 
@@ -650,49 +962,6 @@ function loadPreset(){
 
     roles.innerHTML="";
 
-    
-
-
-
-
-
-
-
-
-function confirmRestart(){
-
-    showConfirm(
-        "按照本局配置重新开始",
-        function(){
-
-            identities=[];
-
-            deadPlayers=new Set();
-
-            votes={};
-
-            currentPlayer=1;
-
-            currentVoterIndex=0;
-
-            votedOutPlayer=null;
-
-            pkPlayers=null;
-
-            document.getElementById("subTitle").style.display="none";
-
-            document.getElementById("result").innerHTML="";
-
-            document.getElementById("setupPage")
-            .classList.remove("hidden");
-
-            document.getElementById("gamePage")
-            .classList.add("hidden");
-        }
-    );
-}
-
-
 createRoleRow("平民",2);
     createRoleRow("狼人",2);
     createRoleRow("守卫",1);
@@ -715,6 +984,20 @@ function shuffle(array){
 
 function startGame(){
 
+    let totalPlayers=0;
+
+    document.querySelectorAll(".role-row input").forEach(input=>{
+
+        totalPlayers += parseInt(input.value)||0;
+    });
+
+    if(totalPlayers<6){
+
+        showAlert("玩家人数达到6人才能开始");
+        return;
+    }
+
+
     identities=[];
 
     let hasWolf=false;
@@ -729,23 +1012,19 @@ function startGame(){
         )||0;
 
         if(evilRoles.includes(role)){
-
             hasWolf=true;
-
-        }else{
-
+        }else if(!thirdPartyRoles.includes(role)){
             hasGood=true;
         }
 
         for(let i=0;i<count;i++){
-
             identities.push(role);
         }
     });
 
     if(!hasWolf){
 
-        showAlert("至少要有一个狼方阵营角色才能开始");
+        showAlert("至少要有一个狼人阵营角色才能开始");
         return;
     }
 
@@ -757,15 +1036,22 @@ function startGame(){
 
     shuffle(identities);
 
+    setPhaseTitle("分发身份");
+
+    night=1;
+
     document.getElementById("setupPage")
     .classList.add("hidden");
+
+    playerFaction=identities.map(role=>roleToFaction(role));
+    playerBaseFaction=identities.map(role=>roleToBaseFaction(role));
+
 
     document.getElementById("gamePage")
     .classList.remove("hidden");
 
     currentPlayer=1;
 
-    document.getElementById("subTitle").style.display="none";
 
     updatePlayer();
 }
@@ -817,6 +1103,10 @@ function mainAction(){
         if(evilRoles.includes(role)){
 
             identity.className="identity redText";
+
+        }else if(["丘比特","混血儿","野孩子"].includes(role)){
+
+            identity.className="identity thirdText";
 
         }else{
 
@@ -905,6 +1195,37 @@ function nextPlayer(){
         showIdentityTable();
     }
 }
+function togglePermanentMark(index){
+
+    if(!(identities.includes("丘比特") || identities.includes("野孩子"))){
+        return;
+    }
+
+    if(permanentMarked.has(index)){
+
+        showConfirm(
+            "将移除"+(index+1)+"号玩家本局的标记",
+            function(){
+
+                permanentMarked.delete(index);
+
+                showIdentityTable();
+            }
+        );
+
+    }else{
+
+        showConfirm(
+            "本局游戏"+(index+1)+"号玩家将被加标记",
+            function(){
+
+                permanentMarked.add(index);
+
+                showIdentityTable();
+            }
+        );
+    }
+}
 
 function toggleDead(index){
 
@@ -925,7 +1246,9 @@ function toggleDead(index){
 
                 deadPlayers.delete(index);
 
-                showIdentityTable();
+                manualNightDeaths=manualNightDeaths.filter(x=>x!==index);
+
+                refreshCurrentPage();
             }
         )
 
@@ -936,96 +1259,181 @@ function toggleDead(index){
             function(){
 
                 deadPlayers.add(index);
+                nightMarks[index]='⬜';
 
-                showIdentityTable();
+                if(!manualNightDeaths.includes(index)){
+                    manualNightDeaths.push(index);
+                }
+                refreshCurrentPage();
             }
         )
     }
 }
 
+function refreshCurrentPage(){
+
+    if(currentPage==="settlement"){
+
+        showDeathSettlementPage();
+        return;
+    }
+
+    if(currentPage==="voteResult"){
+
+        finishVoting();
+        return;
+    }
+
+    showIdentityTable();
+}
+
 function getWinText(){
 
-    const hasThirdParty=identities.some(r=>
-        thirdPartyRoles.includes(r)
-    );
+    const {wolf,god,villager,third}=getRoleCounts();
 
-    if(hasThirdParty){
+    const curseFoxAlive=identities.some(
+    (role,i)=>role==="咒狐" && !deadPlayers.has(i)
+);
 
-        return "";
+    if(third>0 && wolf===0 && god===0 && villager===0){
+        return '<div class="player" style="color:#d0d0d0">第三方胜利</div>';
     }
 
-    const wolfMode=document.getElementById("wolfWinMode")
-    ?document.getElementById("wolfWinMode").value
-    :"edge";
+    if(wolf===0 && (god+villager)>0){
 
-    let wolfAlive=false;
-    let villagerAlive=false;
-    let godAlive=false;
-
-    identities.forEach((role,i)=>{
-
-        if(deadPlayers.has(i)) return;
-
-        if(evilRoles.includes(role)){
-
-            wolfAlive=true;
-
-        }else if(role==="平民"){
-
-            villagerAlive=true;
-
-        }else{
-
-            godAlive=true;
-        }
-    });
-
-    if(!wolfAlive){
-
-        return '<div class="player" style="color:#739478">村民胜利</div>';
+    if(curseFoxAlive){
+        return '<div class="player" style="color:#d0d0d0">第三方胜利</div>';
     }
 
-    const hasVillager=identities.includes("平民");
+    return '<div class="player" style="color:#739478">好人胜利</div>';
+}
+    const wolfMode=document.getElementById("wolfWinMode").value;
 
     const hasGod=identities.some(r=>
-        !evilRoles.includes(r) && r!=="平民"
+        godRoles.includes(r)
     );
 
-    if(wolfMode==="edge"){
+    const hasVillager=identities.some(r=>r==="平民");
 
-        if(
-            (hasVillager && !villagerAlive)
-            ||
-            (hasGod && !godAlive)
-        ){
+    if(wolf>0 && wolf >= (god + villager)){
 
-            return '<div class="player" style="color:#a15c5c">狼人胜利</div>';
+        if(curseFoxAlive){
+            return '<div class="player" style="color:#d0d0d0">第三方胜利</div>';
         }
-
-    }else{
-
-        if(
-            !villagerAlive
-            &&
-            !godAlive
-        ){
-
-            return '<div class="player" style="color:#a15c5c">狼人胜利</div>';
-        }
-    }
-
-    if(false){
 
         return '<div class="player" style="color:#a15c5c">狼人胜利</div>';
     }
 
-    return "";
+    if(wolfMode==="edge"){
+
+    if((hasGod && god===0) || (hasVillager && villager===0)){
+
+        if(curseFoxAlive){
+            return '<div class="player" style="color:#d0d0d0">第三方胜利</div>';
+        }
+
+        return '<div class="player" style="color:#a15c5c">狼人胜利</div>';
+    }
+
+    }else{
+
+    if(god===0 && villager===0 && wolf>0){
+
+        if(curseFoxAlive){
+            return '<div class="player" style="color:#d0d0d0">第三方胜利</div>';
+        }
+
+        return '<div class="player" style="color:#a15c5c">狼人胜利</div>';
+    }
+        }
+
+        return "";
+    }
+
+function buildIdentityBottomButton(hasWinner){
+
+    if(!hasWinner){
+        return `
+        <button
+class="bottomCapsuleBtn blue fixedBottomBtn"
+onclick="confirmStartVote()">
+天亮
+</button>`;
+    }
+
+    return `
+    <button
+    class="bottomCapsuleBtn gold fixedBottomBtn"
+    style="font-size:30px !important;margin-top:30px"
+    onclick="confirmRestart()">
+    ↻
+    </button>`;
+
 }
 
-function showIdentityTable(){
 
-    document.getElementById("subTitle").style.display="block";
-    document.getElementById("subTitle").innerText="身份表";
+
+function buildMarkDisplay(index){
+
+    const mark=nightMarks[index]||"⬜";
+
+    return `
+    <div class="markWrap">
+        <span class="markDisplay">${mark}</span>
+    </div>
+    `;
+}
+function buildMarkControl(index){
+
+    if(deadPlayers.has(index)){
+    return `<div class="markWrap"><span class="markDisplay">⬜</span></div>`;
+    }
+    const cur=nightMarks[index]||"⬜";
+
+    let options=`
+    <option value="" disabled>
+    （选择今晚行动标记）
+    </option>
+    `;
+
+    options+=`
+    <option value="⬜" ${cur==="⬜"?"selected":""}>
+    ⬜ 无标记
+    </option>`;
+
+    if(identities.some(r=>evilRoles.includes(r)))
+    options+=`<option value="🐺" ${cur==="🐺"?"selected":""}>🐺 狼刀目标</option>`;
+    if(identities.includes("守卫"))
+    options+=`<option value="🛡️" ${cur==="🛡️"?"selected":""}>🛡️ 守护目标</option>`;
+    if(identities.includes("女巫"))
+    options+=`<option value="🧪" ${cur==="🧪"?"selected":""}>🧪 女巫目标</option>`;
+    if(identities.includes("摄梦人"))
+    options+=`<option value="💤" ${cur==="💤"?"selected":""}>💤 摄梦目标</option>`;
+    if(identities.includes("乌鸦"))
+    options+=`<option value="🪶" ${cur==="🪶"?"selected":""}>🪶 乌鸦目标</option>`;
+    if(identities.includes("狼美人"))
+    options+=`<option value="🌹" ${cur==="🌹"?"selected":""}>🌹 狼美人目标</option>`;
+    if(identities.includes("梦魇"))
+    options+=`<option value="😈" ${cur==="😈"?"selected":""}>😈 梦魇目标</option>`;
+    if(identities.includes("奇迹商人"))
+    options+=`<option value="🎁" ${cur==="🎁"?"selected":""}>🎁 奇迹商人目标</option>`;
+    if(identities.includes("魔术师"))
+    options+=`<option value="🎭" ${cur==="🎭"?"selected":""}>🎭 魔术师目标</option>`;
+
+    options+=`<option value="⭐" ${cur==="⭐"?"selected":""}>⭐ 特殊标记</option>`;
+
+    return `<div class="markWrap">
+    <span class="markDisplay">${cur}</span>
+    <select class="markSelect" onchange="nightMarks[${index}]=this.value;showIdentityTable();">
+    ${options}
+    </select>
+    </div>`;
+    }
+
+function showIdentityTable(){
+    setPhaseTitle("夜晚");
+
+    currentPage="identity";
 
     document.getElementById("playerText")
     .innerText="";
@@ -1052,11 +1460,20 @@ function showIdentityTable(){
 
     let html=getWinText();
 
+    html+=getFactionStats();
+
+    html+=`
+    <div class="pageSubTitle">
+    身份表
+    </div>
+    `
+
+    const canEditFaction=identities.some(role=>["丘比特","混血儿","野孩子"].includes(role));
+
     html+=`
     <table>
 
     <tr>
-    <th class="deadMark"></th>
     <th>编号</th>
     <th>身份</th>
     </tr>
@@ -1064,10 +1481,12 @@ function showIdentityTable(){
 
     players.forEach(p=>{
 
+        const faction=getFactionAtIndex(p.index);
+
         html+=`
         <tr class="${p.dead?'dead':''}">
 
-        <td class="deadMark">
+        <td class="numberCell">
 
         <button
         type="button"
@@ -1075,11 +1494,15 @@ function showIdentityTable(){
         onclick="toggleDead(${p.index})">
         </button>
 
+        ${buildMarkControl(p.index)}<span class="playerNum" ${(identities.includes("丘比特")||identities.includes("野孩子"))?'onclick="togglePermanentMark('+p.index+')"':''} style="${permanentMarked.has(p.index)?'color:#b59b60;font-weight:bold;':''}${(identities.includes('丘比特')||identities.includes('野孩子'))?'cursor:pointer;':''}">${p.index+1}号</span>
+        
+
         </td>
 
-        <td>${p.index+1}号</td>
-
-        <td>${p.role}</td>
+        <td class="roleCell">
+        <span class="roleText">${p.role}</span>
+        <span class="factionMark ${p.dead?'gray':''}" ${(!p.dead && (((identities[p.index]==="丘比特"||identities[p.index]==="混血儿")&&night===1) || identities[p.index]==="野孩子" || (night===1 && identities.includes("丘比特")))) ? 'onclick="cycleFaction('+p.index+')" style="cursor:pointer"' : ''}>${factionSymbol(faction,p.dead)}</span>
+        </td>
 
         </tr>
         `;
@@ -1091,53 +1514,202 @@ function showIdentityTable(){
     <div class="bottomSpacer"></div>
     `;
 
-    if(!getWinText()){
-
-        html+=`
-        <button
-class="bottomCapsuleBtn blue fixedBottomBtn"
-onclick="confirmStartVote()">
-投票
-</button>
-        `;
-
-    }else{
-
-        html+=`
-        <button
-        class="bottomCapsuleBtn gold fixedBottomBtn"
-        style="font-size:30px !important;margin-top:30px"
-        onclick="confirmRestart()">
-        ↻
-        </button>
-        `;
-    }
+    html+=buildIdentityBottomButton(!!getWinText());
 
     document.getElementById("result").innerHTML=html;
 }
 
 
+function confirmEnterSpeech(){
+
+    showConfirm(
+        "将进入发言环节",
+        function(){
+
+            showSpeechPage();
+        }
+    );
+}
+
+
+function showDeathSettlementPage(){
+    setPhaseTitle("白天");
+
+    currentPage="settlement";
+
+
+    let html=getWinText();
+
+    html+=`
+    <div style="
+    text-align:center;
+    margin-top:10px;
+    margin-bottom:12px;
+    color:#d0d0d0;
+    line-height:1.7;
+    ">
+    ${settlementText}
+    </div>
+
+    <div class="pageSubTitle">
+    身份表
+    </div>
+    `;
+
+    html+='<table><tr><th>编号</th><th>身份</th></tr>';
+
+    identities.forEach((role,i)=>{
+
+    html+=`
+    <tr class="${deadPlayers.has(i)?'dead':''}">
+
+    <td class="numberCell">
+
+    <button
+    type="button"
+    class="deadBtn ${deadPlayers.has(i)?'deadActive':''}"
+    onclick="toggleDead(${i})">
+    </button>
+
+    ${buildMarkDisplay(i)}
+
+    <span class="playerNum"
+    style="${permanentMarked.has(i)?'color:#b59b60;font-weight:bold;':''}">
+    ${i+1}号
+    </span>
+
+    </td>
+
+    <td class="roleCell">
+
+    <span class="roleText">
+    ${role}
+    </span>
+
+    <span class="factionMark ${deadPlayers.has(i)?'gray':''}">
+    ${factionSymbol(
+        getFactionAtIndex(i),
+        deadPlayers.has(i)
+    )}
+    </span>
+
+    </td>
+
+    </tr>
+    `;
+    });
+
+    html+='</table><div class="bottomSpacer"></div>';
+    html+=`<button class="bottomCapsuleBtn blue fixedBottomBtn"
+    onclick="confirmEnterSpeech()">
+    发言
+    </button>`;
+
+    document.getElementById("result").innerHTML=html;
+}
+
+function formatSpeechTime(sec){
+    const m=String(Math.floor(sec/60)).padStart(2,"0");
+    const s=String(sec%60).padStart(2,"0");
+    return m+":"+s;
+}
+
+function restartSpeechTimer(){
+    if(speechTimer) clearInterval(speechTimer);
+    speechSeconds=0;
+    const el=document.getElementById("speechTimer");
+    if(el) el.textContent="00:00";
+    speechTimer=setInterval(()=>{
+        speechSeconds++;
+        const t=document.getElementById("speechTimer");
+        if(t) t.textContent=formatSpeechTime(speechSeconds);
+    },1000);
+}
+
+function showSpeechPage(){
+    setPhaseTitle("白天");
+
+    document.getElementById("playerText").innerText="";
+    document.getElementById("identity").classList.add("hidden");
+    document.getElementById("mainButton").classList.add("hidden");
+    document.getElementById("nextButton").classList.add("hidden");
+
+    if(speechTimer) clearInterval(speechTimer);
+    speechTimer=null;
+    speechSeconds=0;
+
+    document.getElementById("result").innerHTML=`
+    <div id="speechTimer"
+    onclick="restartSpeechTimer()"
+    style="text-align:center;font-size:56px;margin-top:20px;margin-bottom:20px;user-select:none;cursor:pointer;">
+    00:00
+    </div>
+
+    <div class="bottomSpacer"></div>
+
+    <button class="bottomCapsuleBtn blue fixedBottomBtn"
+    onclick="confirmEnterVote()">
+    结束发言环节
+    </button>`;
+
+    restartSpeechTimer();
+}
 
 function confirmStartVote(){
+
+    let tonightDeaths=[...manualNightDeaths];
+
+    identities.forEach((r,i)=>{
+
+        const m=nightMarks[i]||"⬜";
+
+        if(m==="🐺" || m==="🧪"){
+
+            if(!deadPlayers.has(i)){
+                deadPlayers.add(i);
+            }
+
+            nightMarks[i]="⬜";
+
+            if(!tonightDeaths.includes(i)){
+                tonightDeaths.push(i);
+            }
+        }
+    });
+
+    if(tonightDeaths.length){
+        settlementText='昨晚'+tonightDeaths.map(i=>i+1).join(', ')+'号出局';
+    }else{
+        settlementText='昨晚是平安夜';
+    }
+
+    showConfirm("将进行今晚的结算",function(){
+        showDeathSettlementPage();
+        setTimeout(function(){
+
+        showAlert(settlementText);
+
+    },50);
+
+    });
+}
+
+function confirmEnterVote(){
 
     showConfirm(
         "将进入投票环节",
         function(){
-
             startVote();
         }
     );
 }
 
 
-
 let voteFinishedPlayers=[];
 let voteLogs=[];
 
 function renderVoteSelectPage(){
-
-    document.getElementById("subTitle").style.display="block";
-    document.getElementById("subTitle").innerText="投票";
+    setPhaseTitle("白天");
 
     let html=`
     <div class="player yellowText">
@@ -1175,16 +1747,42 @@ function renderVoteSelectPage(){
     html+=`
 <div class="bottomSpacer"></div>
 
-<button
+${
+voteFinishedPlayers.length===0
+?
+`<button
+class="bottomCapsuleBtn gold fixedBottomBtn"
+onclick="confirmSkipNight()">
+进入下一晚
+</button>`
+:
+`<button
 class="bottomCapsuleBtn gold fixedBottomBtn"
 onclick="checkVoteResult()">
 查看投票结果
-</button>
+</button>`
+}
 `;
 
     document.getElementById("result").innerHTML=html;
 }
 
+
+
+function confirmSkipNight(){
+
+    showConfirm(
+        "将结束此环节，进入下一晚",
+        function(){
+
+            nightMarks={};
+            manualNightDeaths=[];
+
+            night++;
+            showIdentityTable();
+        }
+    );
+}
 
 function checkVoteResult(){
 
@@ -1245,6 +1843,7 @@ function startVote(players=null){
 }
 
 function showVotePage(){
+    setPhaseTitle("白天");
 
     if(currentVoterIndex>=alivePlayers.length){
 
@@ -1254,8 +1853,6 @@ function showVotePage(){
 
     const voter=alivePlayers[currentVoterIndex];
 
-    document.getElementById("subTitle").style.display="block";
-    document.getElementById("subTitle").innerText="投票";
 
     let targets=pkPlayers||alivePlayers;
 
@@ -1362,6 +1959,9 @@ function confirmVote(){
 
 
 function finishVoting(){
+        setPhaseTitle("白天");
+
+    currentPage="voteResult";
 
     let count={};
 
@@ -1394,7 +1994,16 @@ function finishVoting(){
 
         resultText=maxPlayers[0]+"号玩家出局";
 
-    }else if(maxPlayers.length>1){
+        votedOutPlayer=parseInt(maxPlayers[0],10)-1;
+
+        if(!deadPlayers.has(votedOutPlayer)){
+            deadPlayers.add(votedOutPlayer);
+    }
+
+
+    }
+    else if(maxPlayers.length>1){
+
 
         
 if(isPKVote){
@@ -1408,7 +2017,6 @@ if(isPKVote){
 
     }
 
-    document.getElementById("subTitle").style.display="none";
 
     let voteFlow={};
 
@@ -1421,12 +2029,54 @@ if(isPKVote){
         voteFlow[v.target].push(v.voter);
     });
 
-    let flowText=Object.entries(voteFlow)
-    .map(([to,from])=>
-        from.join(", ")+" → "+to
-    ).join("<br>");
+    let flowRows=Object.entries(voteFlow)
 
-    let html=`
+    .sort((a,b)=>{
+
+        if(a[0]==="弃票") return 1;
+        if(b[0]==="弃票") return -1;
+
+        return (count[b[0]]||0)-(count[a[0]]||0);
+    })
+
+    .map(([to,from])=>{
+
+        const rightText=
+            to==="弃票"
+            ? `共${from.length}人`
+            : `共${count[to]||0}票`;
+
+        return `
+        <tr>
+
+            <td class="flowFrom">
+            ${from.join(", ")}
+            </td>
+
+            <td class="flowArrow">
+            →
+            </td>
+
+            <td class="flowTo">
+            ${to==="弃票"?"弃":to}
+            </td>
+
+            <td class="flowCount">
+            ${rightText}
+            </td>
+
+        </tr>
+        `;
+    })
+    .join("");
+
+let flowText=`
+<table class="voteFlowTable">
+${flowRows}
+</table>
+`;
+
+    let html=getWinText()+`
     <div class="player">
     ${resultText}
     </div>
@@ -1438,85 +2088,101 @@ if(isPKVote){
     color:#d0d0d0;
     line-height:1.7;
     ">
+    <div style="display:inline-block">
     ${flowText}
     </div>
+    </div>
 
+    <div class="pageSubTitle">
+    身份表
+    </div>
+    `;
+    html+=`
     <table>
 
     <tr>
-    <th>玩家</th>
-    <th>票数</th>
+    <th>编号</th>
+    <th>身份</th>
     </tr>
     `;
-
-    let resultPlayers=[];
-
-    for(let i=1;i<=identities.length;i++){
-
-        resultPlayers.push({
-            id:i,
-            vote:count[i]||0,
-            dead:deadPlayers.has(i-1)
-        });
-    }
-
-    resultPlayers.sort((a,b)=>{
-
-        if(a.dead!==b.dead){
-
-            return a.dead-b.dead;
-        }
-
-        return b.vote-a.vote || a.id-b.id;
-    });
-
-    resultPlayers.forEach(p=>{
-
-        html+=`
-        <tr class="${p.dead?'dead':''}">
-
-        <td>${p.id}号</td>
-
-        <td>${p.vote}</td>
-
-        </tr>
-        `;
-    });
+    identities.forEach((role,i)=>{
 
     html+=`
-    <tr>
-    <td>弃票</td>
-    <td>${abstain}</td>
-    </tr>
+    <tr class="${deadPlayers.has(i)?'dead':''}">
 
+    <td class="numberCell">
+
+    <button
+    type="button"
+    class="deadBtn ${deadPlayers.has(i)?'deadActive':''}"
+    onclick="toggleDead(${i})">
+    </button>
+
+    ${buildMarkDisplay(i)}
+
+    <span class="playerNum"
+    style="${permanentMarked.has(i)?'color:#b59b60;font-weight:bold;':''}">
+    ${i+1}号
+    </span>
+
+    </td>
+
+    <td class="roleCell">
+
+    <span class="roleText">
+    ${role}
+    </span>
+
+    <span class="factionMark ${deadPlayers.has(i)?'gray':''}">
+    ${factionSymbol(
+        getFactionAtIndex(i),
+        deadPlayers.has(i)
+    )}
+    </span>
+
+    </td>
+
+    </tr>
+    `;
+    });
+    html+=`
     </table>
 
     <div class="bottomSpacer"></div>
     `;
+    
 
     if(maxPlayers.length===1 && maxVote>0){
 
-        votedOutPlayer=maxPlayers[0]-1;
 
         html+=`
         <button
-        class="bottomCapsuleBtn blue fixedBottomBtn voteBtnCapsule"
-        style="font-size:30px !important;margin-top:30px"
-        onclick="applyVoteOut()">
-        ←
+        class="bottomCapsuleBtn gold fixedBottomBtn voteBtnCapsule"
+        onclick="
+        nightMarks={};
+        manualNightDeaths=[];
+        night++;
+        showIdentityTable()
+        ">
+         进入下一晚
         </button>
         `;
 
-    }else if(maxPlayers.length>1){
+    }
+    else if(maxPlayers.length>1){
 
         if(isPKVote){
 
             html+=`
             <button
-            class="bottomCapsuleBtn blue fixedBottomBtn voteBtnCapsule"
-            style="font-size:30px !important;margin-top:30px"
-            onclick="showIdentityTable()">
-            ←
+            class="bottomCapsuleBtn gold fixedBottomBtn voteBtnCapsule"
+            onclick="
+            nightMarks={};
+            manualNightDeaths=[];
+            night++;
+            showIdentityTable()
+            ">
+            进入下一晚
             </button>
             `;
 
@@ -1535,10 +2201,14 @@ if(isPKVote){
 
         html+=`
         <button
-        class="bottomCapsuleBtn blue fixedBottomBtn voteBtnCapsule"
-        style="font-size:30px !important;margin-top:30px"
-        onclick="showIdentityTable()">
-        ←
+        class="bottomCapsuleBtn gold fixedBottomBtn voteBtnCapsule"
+        onclick="
+nightMarks={};
+manualNightDeaths=[];
+night++;
+showIdentityTable()
+">
+        进入下一晚
         </button>
         `;
     }
@@ -1546,27 +2216,6 @@ if(isPKVote){
     document.getElementById("result")
     .innerHTML=html;
 }
-
-
-function applyVoteOut(){
-
-    if(votedOutPlayer!==null){
-
-        deadPlayers.add(votedOutPlayer);
-    }
-
-    votedOutPlayer=null;
-
-    showIdentityTable();
-}
-
-
-
-
-
-
-
-
 
 
 function confirmRestart(){
@@ -1582,6 +2231,13 @@ function confirmRestart(){
             votes={};
 
             currentPlayer=1;
+            night=1;
+            playerFaction=[];
+            playerBaseFaction=[];
+            permanentMarked=new Set();
+            nightMarks={};
+            manualNightDeaths=[];
+            settlementText='昨晚是平安夜';
 
             currentVoterIndex=0;
 
@@ -1589,9 +2245,10 @@ function confirmRestart(){
 
             pkPlayers=null;
 
-            document.getElementById("subTitle").style.display="none";
 
             document.getElementById("result").innerHTML="";
+
+            setPhaseTitle("配置本局身份");
 
             document.getElementById("setupPage")
             .classList.remove("hidden");
