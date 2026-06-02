@@ -67,7 +67,7 @@ https://liukunyi.github.io/Werewolf-Judge-Tools/
 - 💤 摄梦目标
 - 🌹 狼美人目标
 - 😈 梦魇目标
-- 🎁 奇迹商人目标
+- 🎁 商人目标
 - 🎭 魔术师目标
 - ⭐ 特殊标记
 
