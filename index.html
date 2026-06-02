@@ -1072,16 +1072,21 @@ function startGame(){
         return;
     }
 
-       const specialThirdCount=[
-        "丘比特",
-        "咒狐",
-        "恶魔"
-    ].filter(role=>identities.includes(role)).length;
+       const selectedRoles=[
+    ...document.querySelectorAll(".role-row select")
+].map(s=>s.value);
 
-    if(specialThirdCount>1){
-        showAlert("第三方角色冲突");
-        return;
-	}
+      const specialThirdCount=[
+          "丘比特",
+          "咒狐",
+          "恶魔"
+      ].filter(role=>selectedRoles.includes(role)).length;
+
+      if(specialThirdCount>1){
+
+          showAlert("第三方角色冲突");
+          return;
+}
     
 	
     identities=[];
