@@ -655,7 +655,7 @@ const allRoles=[
 ];
 
 const evilRoles=[
-"狼人","狼王","白狼王","狼美人","机械狼","石像鬼","梦魇","血月使徒","恶灵骑士","隐狼","自爆狼"
+"狼人","狼王","白狼王","狼美人","机械狼","石像鬼","梦魇","血月使徒","恶灵骑士","隐狼"
 ];
 
 let identities=[];
@@ -1072,7 +1072,18 @@ function startGame(){
         return;
     }
 
+       const specialThirdCount=[
+        "丘比特",
+        "咒狐",
+        "恶魔"
+    ].filter(role=>identities.includes(role)).length;
 
+    if(specialThirdCount>1){
+        showAlert("第三方角色冲突");
+        return;
+	}
+    
+	
     identities=[];
 
     let hasWolf=false;
