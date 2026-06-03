@@ -776,13 +776,12 @@ function getNightOrderText(){
         order.push("魔术师");
 
     if(night===1 && identities.includes("黑市商人"))
-
 	    order.push("黑市商人");
     
     if(identities.includes("禁言长老"))
         order.push("禁言长老");
 
-if(identities.includes("石像鬼"))
+    if(identities.includes("石像鬼"))
         order.push("石像鬼");
 
     if(identities.includes("狼美人"))
@@ -791,10 +790,10 @@ if(identities.includes("石像鬼"))
     if(identities.includes("机械狼"))
         order.push("机械狼");
         
-     if(identities.includes("梦魇"))
+    if(identities.includes("梦魇"))
         order.push("梦魇");
-        
-	    if(identities.includes("摄梦人"))
+        	
+	if(identities.includes("摄梦人"))
         order.push("摄梦人");
 
     if(identities.includes("守卫"))
@@ -802,7 +801,8 @@ if(identities.includes("石像鬼"))
 
 	if(identities.includes("恶魔"))
     order.push("恶魔");
-	    if(identities.some(r=>evilRoles.includes(r)))
+	  
+	if(identities.some(r=>evilRoles.includes(r)))
         order.push("狼人");
 
     if(identities.includes("女巫"))
@@ -1096,7 +1096,7 @@ function startGame(){
 
       if(banThirdCount>1){
 
-          showAlert("第三方角色冲突");
+          showAlert("只能包含一个第三方角色");
           return;
 }
     
@@ -1867,7 +1867,14 @@ function confirmStartVote(){
     });  
   
     if(tonightDeaths.length){
-        settlementText='昨晚'+tonightDeaths.map(i=>i+1).join(', ')+'号出局';
+
+    const sortedDeaths=[...tonightDeaths]
+        .sort((a,b)=>a-b);
+
+    settlementText='昨晚'
+        +sortedDeaths.map(i=>i+1).join(', ')
+        +'号出局';
+
     }else{
         settlementText='昨晚是平安夜';
     }
