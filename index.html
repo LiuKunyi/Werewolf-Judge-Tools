@@ -816,6 +816,9 @@ function getNightOrderText(){
         
     if(night>1 && identities.includes("黑市商人"))
 		order.push("幸运儿")
+  
+	if(night>1 && identities.includes("守墓人"))
+		order.push("守墓人")
 
     if(identities.includes("猎人"))
         order.push("猎人");
