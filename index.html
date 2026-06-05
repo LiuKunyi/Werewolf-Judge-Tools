@@ -228,16 +228,17 @@ th,td{
     right:6px;
     top:50%;
     transform:translateY(-50%);
-    width:32px;
+    width:72px;
     height:34px;
+
+    display:flex;
+    justify-content:flex-end;
+    align-items:center;
 }
 .markDisplay{
-    position:absolute;
-    inset:0;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    font-size:22px;
+    font-size:18px;
+    white-space:nowrap;
+    text-align:right;
     pointer-events:none;
 }
 .markSelect{
@@ -301,11 +302,6 @@ th,td{
     border-collapse:collapse;
     width:auto;
     display:inline-table;
-}
-
-.voteFlowTable{
-    margin:0 auto;
-    border-collapse:collapse;
 }
 
 .voteFlowTable td{
@@ -476,12 +472,6 @@ select option{
     color:white !important;
 }
 
-
-.bottomCapsuleBtn.blue{
-    background:#5f7894;
-    color:white;
-}
-
 .bottomCapsuleBtn.green{
     background:#739478;
     color:white;
@@ -529,6 +519,159 @@ select option{
     filter:brightness(.85);
 }
 
+#capsuleSetup{
+    margin-top:10px;
+}
+
+.setupCount{
+    text-align:center;
+    color:#cfcfcf;
+    font-size:18px;
+    margin-top:-8px;
+    margin-bottom:12px;
+}
+
+.setupPreset{
+    width:100%;
+    height:46px;
+    border:none;
+    border-radius:10px;
+    background:#444b66;
+    color:white;
+    font-size:18px;
+    margin-bottom:5px;
+
+    text-align:left;
+	padding-left:8px;
+}
+
+.setupDivider{
+    height:1px;
+    background:#4a5066;
+    margin:18px 0;
+}
+
+.sectionTitle{
+    color:#9aa0b5;
+    font-size:13px;
+
+    margin-bottom:8px;
+
+    text-align:left;
+
+    padding-left:6px;
+}
+
+.roleCapsule{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+
+    height:35px;
+
+    padding:0 14px;
+
+    border-radius:999px;
+
+    color:white;
+
+    font-size:17px;
+
+    margin:2px;
+
+    margin-top:5px;
+
+    cursor:pointer;
+
+    transition:
+        transform .12s ease,
+        opacity .12s ease;
+}
+
+.roleCapsule:active{
+
+    transform:scale(0.95);
+}
+
+
+
+.goodCapsule{
+    background:#739478;
+    color:white;
+}
+
+.wolfCapsule{
+    background:#954d4d;
+    color:white;
+}
+
+.thirdCapsule{
+    background:#777;
+    color:white;
+}
+
+.addRoleCapsule.goodCapsule{
+    color:#739478;
+}
+
+.addRoleCapsule.wolfCapsule{
+    color:#954d4d;
+}
+
+.addRoleCapsule.thirdCapsule{
+    color:#777;
+}
+
+.addRoleCapsule{
+    background:transparent !important;
+    border:2px solid currentColor;
+}
+
+.selectedRoleCapsule{
+
+    padding:0 22px;
+
+    min-height:38px;
+
+    font-size:17px;
+
+    margin-top:6.5px;
+
+}
+
+.roleGroup{
+    margin-top:10px;
+}
+
+.selectedRoleGroup{
+    margin-top:0;
+}
+
+.setupTextBtn{
+    text-align:center;
+    color:#cfcfcf;
+    font-size:18px;
+    margin-top:12px;
+    margin-bottom:7px;
+    cursor:pointer;
+    transition:
+        opacity .15s ease;
+}
+
+.setupTextBtn:active{
+
+    opacity:.6;
+}
+
+#speechDecimal{
+
+    font-size:38px;
+    opacity:.75;
+    position:relative;
+    left:-14px;
+    top:-1px;
+}
+
 </style>
 </head>
 
@@ -545,49 +688,7 @@ select option{
 
 <div id="setupPage">
 
-<button class="mainBtn orange" onclick="loadPreset()">
-6人预设
-</button>
-
-<div id="roles"></div>
-
-<button class="addBtn" onclick="addRole()">+</button>
-
-
-<div class="winModeRow" style="
-display:grid;
-grid-template-columns:1fr 1fr;
-align-items:center;
-width:100%;
-margin-top:14px;
-">
-
-<div style="
-font-size:18px;
-white-space:nowrap;
-">
-狼人胜利方式：
-</div>
-
-<div style="
-display:flex;
-justify-content:flex-end;
-">
-<select id="wolfWinMode"
-style="
-width:88px;
-box-sizing:border-box;
-">
-<option value="edge">屠边</option>
-<option value="city">屠城</option>
-</select>
-</div>
-
-</div>
-
-<div class="player" style="font-size:26px" id="totalPeople">
-当前共0人
-</div>
+<div id="capsuleSetup"></div>
 
 <button class="mainBtn blue" onclick="startGame()">
 开始游戏
@@ -654,10 +755,6 @@ const allRoles=[
 "丘比特","混血儿","野孩子","咒狐","恶魔"
 ];
 
-const evilRoles=[
-"狼人","狼王","白狼王","狼美人","机械狼","石像鬼","梦魇","血月使徒","恶灵骑士","隐狼"
-];
-
 let identities=[];
 let currentPlayer=1;
 let state="view";
@@ -675,15 +772,142 @@ let playerBaseFaction=[];
 let night=1;
 let speechTimer=null;
 let speechSeconds=0;
+let speechTenths=0;
+
 let nightMarks={};
+
+const MARKS={
+
+wolfKill:{
+icon:"🐺",
+text:"狼刀目标"
+},
+
+poison:{
+icon:"🧪",
+text:"女巫目标"
+},
+
+guard:{
+icon:"🛡️",
+text:"守护目标"
+},
+
+dream:{
+icon:"💤",
+text:"摄梦目标"
+},
+
+wolfBeauty:{
+icon:"🌹",
+text:"狼美人目标"
+},
+
+nightmare:{
+icon:"😈",
+text:"梦魇目标"
+},
+
+merchant:{
+icon:"🎁",
+text:"商人目标"
+},
+
+magician:{
+icon:"🎭",
+text:"魔术师目标"
+},
+
+silence:{
+icon:"🔇",
+text:"禁言目标"
+}
+
+};
+
+function hasMark(index,type){
+
+    return (
+        nightMarks[index] &&
+        nightMarks[index].includes(type)
+    );
+
+}
+
 let manualNightDeaths=[];
 let settlementText='昨晚是平安夜';
+let lastDreamTarget=null;
+let currentDreamTarget=null;
 let permanentMarked=new Set();
 let currentPage="identity";
+let wolfWinMode="edge";
+let setupRoles=[];
+let currentPreset="witch6";
+let showAvailableRoles=false;
+
+const presets={
+    witch6:[
+        {role:"平民",count:2},
+        {role:"狼人",count:2},
+        {role:"预言家",count:1},
+        {role:"女巫",count:1}
+    ],
+
+    guard6:[
+        {role:"平民",count:2},
+        {role:"狼人",count:2},
+        {role:"预言家",count:1},
+        {role:"守卫",count:1}
+    ],
+
+    pnyhb12:[
+        {role:"平民",count:4},
+        {role:"狼人",count:4},
+        {role:"预言家",count:1},
+        {role:"女巫",count:1},
+        {role:"猎人",count:1},
+        {role:"愚者",count:1}
+    ],
+
+    pnyhj12:[
+        {role:"平民",count:4},
+        {role:"狼人",count:4},
+        {role:"预言家",count:1},
+        {role:"女巫",count:1},
+        {role:"猎人",count:1},
+        {role:"禁言长老",count:1}
+    ]
+};
+
+function applyPreset(name){
+
+    currentPreset=name;
+
+    setupRoles=
+    JSON.parse(
+        JSON.stringify(
+            presets[name]
+        )
+    );
+
+    renderCapsuleSetup();
+}
 
 const thirdPartyRoles=[
 "丘比特","混血儿","野孩子","咒狐"
 ,"恶魔"];
+
+const evilRoles=[
+"狼人","狼王","白狼王","狼美人","机械狼","石像鬼","梦魇","血月使徒","恶灵骑士","隐狼"
+];
+
+const goodRoles=[
+"平民",
+"预言家","女巫","守卫","猎人","愚者","骑士",
+"摄梦人","守墓人","猎魔人",
+"黑市商人","定序王子",
+"魔术师","禁言长老","狐狸","训熊师"
+];
 
 function setPhaseTitle(text){
 
@@ -895,171 +1119,6 @@ function cycleFaction(index){
     });
 }
 
-
-function getUsedRoles(){
-
-    let arr=[];
-
-    document.querySelectorAll("#roles select").forEach(s=>{
-
-        arr.push(s.value);
-    });
-
-    return arr;
-}
-
-function updateTotal(){
-
-    let total=0;
-
-    document.querySelectorAll(".role-row input").forEach(i=>{
-
-        let value=parseInt(i.value)||0;
-
-        value=Math.max(0,Math.min(30,value));
-
-        i.value=value;
-
-        total+=value;
-    });
-
-    document.getElementById("totalPeople").innerText=
-    "当前共"+total+"人";
-}
-
-document.addEventListener("input",updateTotal);
-document.addEventListener("change",function(e){
-
-    if(e.target.tagName==="SELECT"){
-
-        rebuildRoleOptions();
-    }
-});
-
-
-
-function rebuildRoleOptions(){
-
-    const rows=[...document.querySelectorAll(".role-row")];
-
-    const selectedRoles=rows.map(r=>
-        r.querySelector("select").value
-    );
-
-    rows.forEach((row,index)=>{
-
-        const current=selectedRoles[index];
-
-        const usedElsewhere=selectedRoles.filter(
-            (r,i)=>i!==index
-        );
-
-        const select=row.querySelector("select");
-
-        
-select.innerHTML="";
-
-const groups=[
-["好人阵营",["平民","预言家","女巫","守卫","猎人","愚者","骑士","摄梦人","守墓人","猎魔人","黑市商人","定序王子","魔术师","禁言长老","狐狸","训熊师"]],
-["狼人阵营",["狼人","狼王","白狼王","狼美人","机械狼","石像鬼","梦魇","血月使徒","恶灵骑士","隐狼"]],
-["第三方阵营",["丘比特","混血儿","野孩子","咒狐","恶魔"]]
-];
-
-groups.forEach(g=>{
-const opt=document.createElement("optgroup");
-opt.label=g[0];
-g[1].forEach(role=>{
-if(role===current || !usedElsewhere.includes(role)){
-const option=document.createElement("option");
-option.value=role;
-option.textContent=role;
-if(role===current) option.selected=true;
-opt.appendChild(option);
-}
-});
-select.appendChild(opt);
-});
-    });
-}
-
-
-function createRoleRow(role,count=1){
-
-    const row=document.createElement("div");
-
-    row.className="role-row";
-
-    const used=getUsedRoles();
-
-    const available=allRoles.filter(r=>!used.includes(r)||r===role);
-
-    row.innerHTML=`
-    <select>
-    ${available.map(r=>
-    `<option ${r===role?'selected':''}>${r}</option>`
-    ).join("")}
-    </select>
-
-    <input type="text" inputmode="numeric" pattern="[0-9]*" value="${count}" min="0" max="30" onfocus="this.select()" oninput="this.value=this.value.replace(/[^0-9]/g,'')">
-
-    <button class="removeBtn" type="button">−</button>
-    `;
-
-    row.querySelector(".removeBtn").onclick=function(){
-
-        const rows=document.querySelectorAll(".role-row");
-
-        if(rows.length<=1){
-
-            showAlert("至少保留一个角色");
-            return;
-        }
-
-        row.remove();
-
-        rebuildRoleOptions();
-
-        updateTotal();
-    };
-
-    document.getElementById("roles").appendChild(row);
-
-    updateTotal();
-}
-
-function addRole(){
-
-    const used=getUsedRoles();
-
-    const available=allRoles.filter(r=>!used.includes(r));
-
-    if(available.length===0){
-
-        showAlert("没有可添加的角色了");
-        return;
-    }
-
-    createRoleRow(available[0],1);
-
-    rebuildRoleOptions();
-}
-
-function loadPreset(){
-
-    const roles=document.getElementById("roles");
-
-    roles.innerHTML="";
-
-createRoleRow("平民",2);
-    createRoleRow("狼人",2);
-    createRoleRow("守卫",1);
-    createRoleRow("预言家",1);
-
-    rebuildRoleOptions();
-
-    updateTotal();
-}
-
 function shuffle(array){
 
     for(let i=array.length-1;i>0;i--){
@@ -1070,14 +1129,452 @@ function shuffle(array){
     }
 }
 
+function getTotalPlayers(){
+
+    let total=0;
+
+    setupRoles.forEach(r=>{
+
+        total+=r.count;
+
+    });
+
+    return total;
+}
+
+function toggleAvailableRoles(){
+
+    showAvailableRoles=
+    !showAvailableRoles;
+
+    renderCapsuleSetup();
+}
+
+function renderCapsuleSetup(){
+
+    const total=getTotalPlayers();
+
+    document.getElementById(
+        "capsuleSetup"
+    ).innerHTML=`
+
+    <div class="setupCount">
+    当前共${total}人
+    </div>
+
+    <select
+    id="presetSelect"
+    class="setupPreset">
+
+        <option value=""
+        disabled>
+        （请选择预设）
+        </option>
+
+        <option value="witch6">
+        6人女巫局
+        </option>
+
+        <option value="guard6">
+        6人守卫局
+        </option>
+
+        <option value="pnyhb12">
+        12人预女猎白
+        </option>
+
+        <option value="pnyhj12">
+        12人预女猎禁
+        </option>
+
+        <option value="custom">
+        自定义
+        </option>
+
+    </select>
+
+    <div class="setupDivider"></div>
+
+    <div class="sectionTitle">
+    已添加角色
+    </div>
+
+    <div id="selectedRolesBox"></div>
+    
+
+    <div class="setupDivider"></div>
+
+    <div
+    class="sectionTitle"
+    onclick="toggleAvailableRoles()"
+    style="cursor:pointer;">
+
+    未添加角色 ${showAvailableRoles?"▲":"▼"}
+
+    </div>
+
+    <div id="availableRolesBox"></div>
+
+    <div class="setupDivider"></div>
+
+    <div
+    id="wolfWinModeBtn"
+    class="setupTextBtn">
+
+    狼人胜利模式：
+
+    ${
+        wolfWinMode==="edge"
+        ?"屠边"
+        :"屠城"
+    }
+
+    </div>
+
+    </div>
+    `;
+
+    const presetSelect=
+    document.getElementById(
+        "presetSelect"
+    );
+
+    presetSelect.value=currentPreset;
+
+    presetSelect.onchange=function(){
+
+        if(this.value==="custom"){
+
+            currentPreset="custom";
+
+            showAvailableRoles=true;
+
+            renderCapsuleSetup();
+
+            return;
+        }
+
+        showAvailableRoles=false;
+
+        applyPreset(this.value);
+    };
+
+    const selectedBox=
+    document.getElementById(
+        "selectedRolesBox"
+    );
+
+    let selectedHtml="";
+
+    const selectedGood=[
+        ...setupRoles.filter(r=>r.role==="平民"),
+        ...setupRoles.filter(r=>
+            goodRoles.includes(r.role) &&
+            r.role!=="平民"
+        )
+    ];
+
+    const selectedWolf=[
+        ...setupRoles.filter(r=>r.role==="狼人"),
+        ...setupRoles.filter(r=>
+            evilRoles.includes(r.role) &&
+            r.role!=="狼人"
+        )
+    ];
+
+    const selectedThird=
+    setupRoles.filter(r=>
+        thirdPartyRoles.includes(r.role)
+    );
+
+    [selectedGood,selectedWolf,selectedThird]
+    .forEach(group=>{
+
+        if(group.length===0){
+            return;
+        }
+
+        selectedHtml+=`
+        <div class="selectedRoleGroup">
+        `;
+
+        group.forEach(role=>{
+
+            let cls="goodCapsule";
+
+            if(evilRoles.includes(role.role)){
+                cls="wolfCapsule";
+            }
+
+            if(thirdPartyRoles.includes(role.role)){
+                cls="thirdCapsule";
+            }
+
+            const text=
+			(role.role==="平民" || role.role==="狼人")
+			? role.role+" "+role.count
+			: role.role;
+
+            selectedHtml+=`
+            <span
+            class="roleCapsule selectedRoleCapsule ${cls}"
+            onclick="handleRoleClick('${role.role}')">
+            ${text}
+            </span>
+            `;
+        });
+
+        selectedHtml+=`
+        </div>
+        `;
+
+    });
+  
+    selectedBox.innerHTML=selectedHtml;
+
+    const availableBox=
+    document.getElementById(
+        "availableRolesBox"
+    );
+
+    let availableHtml="";
+
+    const usedRoles=
+    setupRoles.map(r=>r.role);
+
+    function renderGroup(list,cls){
+
+        let html="";
+
+        list.forEach(role=>{
+
+            if(usedRoles.includes(role)){
+                return;
+            }
+
+            html+=`
+            <span
+            class="roleCapsule addRoleCapsule ${cls}"
+            onclick="handleAddRole('${role}')">
+            ＋ ${role}
+            </span>
+            `;
+        });
+
+        return html;
+    }
+
+    availableHtml+=`
+    <div class="roleGroup">
+    ${renderGroup(goodRoles,"goodCapsule")}
+    </div>
+    `;
+
+    availableHtml+=`
+    <div class="roleGroup">
+    ${renderGroup(evilRoles,"wolfCapsule")}
+    </div>
+    `;
+
+    availableHtml+=`
+    <div class="roleGroup">
+    ${renderGroup(thirdPartyRoles,"thirdCapsule")}
+    </div>
+    `;
+
+    if(showAvailableRoles){
+
+        availableBox.innerHTML=
+        availableHtml;
+
+    }else{
+
+        availableBox.innerHTML="";
+    }
+
+    document.getElementById(
+    "wolfWinModeBtn"
+).onclick=function(){
+
+    wolfWinMode=
+    wolfWinMode==="edge"
+    ?"city"
+    :"edge";
+
+    renderCapsuleSetup();
+};
+
+}
+
+function handleRoleClick(role){
+
+    if(role==="平民" || role==="狼人"){
+
+        editSpecialRole(role);
+        return;
+    }
+
+    removeRoleFromSetup(role);
+}
+
+function editSpecialRole(role){
+
+    const target=
+    setupRoles.find(
+        r=>r.role===role
+    );
+
+    if(!target){
+        return;
+    }
+
+    const value=prompt(
+        "请输入"+role+"数量",
+        target.count
+    );
+
+    if(value===null){
+        return;
+    }
+
+    const count=parseInt(value);
+
+    if(isNaN(count) || count<0){
+        return;
+    }
+
+    if(count===0){
+
+        removeRoleFromSetup(role);
+
+        return;
+    }
+
+    target.count=count;
+
+    currentPreset="custom";
+
+    showAvailableRoles=true;
+
+    renderCapsuleSetup();
+}
+
+function removeRoleFromSetup(role){
+
+    setupRoles=
+    setupRoles.filter(r=>
+        r.role!==role
+    );
+
+    currentPreset="custom";
+
+    showAvailableRoles=true;
+
+    renderCapsuleSetup();
+}
+
+function handleAddRole(role){
+
+    const selectedRoles=
+    setupRoles.map(r=>r.role);
+
+    const hasCupid=
+    selectedRoles.includes("丘比特");
+
+    if(
+        hasCupid &&
+        thirdPartyRoles.includes(role) &&
+        role!=="丘比特"
+    ){
+
+        showAlert(
+            "请先删除丘比特，再添加其他第三方角色"
+        );
+
+        return;
+    }
+
+    if(
+        role==="丘比特" &&
+        selectedRoles.some(r=>
+            thirdPartyRoles.includes(r) &&
+            r!=="丘比特"
+        )
+    ){
+
+        showAlert(
+            "请先删除其他第三方角色，再添加丘比特"
+        );
+
+        return;
+    }
+
+    if(
+        role==="咒狐" &&
+        selectedRoles.includes("恶魔")
+    ){
+
+        showAlert(
+            "咒狐和恶魔不能同时出现"
+        );
+
+        return;
+    }
+
+    if(
+        role==="恶魔" &&
+        selectedRoles.includes("咒狐")
+    ){
+
+        showAlert(
+            "咒狐和恶魔不能同时出现"
+        );
+
+        return;
+    }
+
+    if(role==="平民" || role==="狼人"){
+
+        const value=prompt(
+            "请输入"+role+"数量",
+            1
+        );
+
+        if(value===null){
+            return;
+        }
+
+        const count=parseInt(value);
+
+        if(isNaN(count) || count<=0){
+            return;
+        }
+
+        addRoleToSetup(role,count);
+
+        return;
+    }
+
+    addRoleToSetup(role,1);
+}
+
+function addRoleToSetup(role,count=1){
+
+    setupRoles.push({
+        role:role,
+        count:count
+    });
+
+    currentPreset="custom";
+
+    showAvailableRoles=true;
+
+    renderCapsuleSetup();
+}
+
 function startGame(){
 
-    let totalPlayers=0;
-
-    document.querySelectorAll(".role-row input").forEach(input=>{
-
-        totalPlayers += parseInt(input.value)||0;
-    });
+    let totalPlayers=getTotalPlayers();
 
     if(totalPlayers<6){
 
@@ -1085,37 +1582,18 @@ function startGame(){
         return;
     }
 
-       const selectedRoles=[
-    ...document.querySelectorAll(".role-row select")
-].map(s=>s.value);
-
-      const banThirdCount=[
-          "丘比特",
-          "咒狐",
-          "恶魔",
-          "混血儿",
-          "野孩子"
-      ].filter(role=>selectedRoles.includes(role)).length;
-
-      if(banThirdCount>1){
-
-          showAlert("只能包含一个第三方角色");
-          return;
-}
+        const selectedRoles=
+        setupRoles.map(r=>r.role);
     
-	
     identities=[];
 
     let hasWolf=false;
     let hasGood=false;
 
-    document.querySelectorAll(".role-row").forEach(row=>{
+    setupRoles.forEach(item=>{
 
-        const role=row.querySelector("select").value;
-
-        const count=parseInt(
-            row.querySelector("input").value
-        )||0;
+        const role=item.role;
+        const count=item.count;
 
         if(evilRoles.includes(role)){
             hasWolf=true;
@@ -1365,7 +1843,7 @@ function toggleDead(index){
             function(){
 
                 deadPlayers.add(index);
-                nightMarks[index]='⬜';
+                delete nightMarks[index];
 
                 if(!manualNightDeaths.includes(index)){
                     manualNightDeaths.push(index);
@@ -1415,7 +1893,7 @@ function getWinText(){
 
     return '<div class="player" style="color:#739478">好人胜利</div>';
 }
-    const wolfMode=document.getElementById("wolfWinMode").value;
+    const wolfMode=wolfWinMode;
 
     const hasGod=identities.some(r=>
         godRoles.includes(r)
@@ -1491,59 +1969,127 @@ onclick="confirmStartVote()">
 
 function buildMarkDisplay(index){
 
-    const mark=nightMarks[index]||"⬜";
+    const marks=nightMarks[index]||[];
+
+    const display=
+    marks.length
+    ? marks.map(m=>MARKS[m].icon).join("")
+    : "⬜";
 
     return `
     <div class="markWrap">
-        <span class="markDisplay">${mark}</span>
+        <span class="markDisplay">${display}</span>
     </div>
     `;
 }
 function buildMarkControl(index){
 
     if(deadPlayers.has(index)){
-    return `<div class="markWrap"><span class="markDisplay">⬜</span></div>`;
+        return `<div class="markWrap"><span class="markDisplay">⬜</span></div>`;
     }
-    const cur=nightMarks[index]||"⬜";
+
+    const marks=nightMarks[index]||[];
+
+    const display=
+    marks.length
+    ? marks.map(m=>MARKS[m].icon).join("")
+    : "⬜";
 
     let options=`
-    <option value="" disabled>
-    （选择今晚行动标记）
+    <option value="">
+    选择标记
     </option>
     `;
 
-    options+=`
-    <option value="⬜" ${cur==="⬜"?"selected":""}>
-    ⬜ 无标记
-    </option>`;
-
     if(identities.some(r=>evilRoles.includes(r)))
-    options+=`<option value="🐺" ${cur==="🐺"?"selected":""}>🐺 狼刀目标</option>`;
+        options+=`<option value="wolfKill">🐺 狼刀目标</option>`;
+
     if(identities.includes("守卫"))
-    options+=`<option value="🛡️" ${cur==="🛡️"?"selected":""}>🛡️ 守护目标</option>`;
+        options+=`<option value="guard">🛡️ 守护目标</option>`;
+
     if(identities.includes("女巫"))
-    options+=`<option value="🧪" ${cur==="🧪"?"selected":""}>🧪 女巫目标</option>`;
+        options+=`<option value="poison">🧪 女巫目标</option>`;
+
     if(identities.includes("摄梦人"))
-    options+=`<option value="💤" ${cur==="💤"?"selected":""}>💤 摄梦目标</option>`;
+        options+=`<option value="dream">💤 摄梦目标</option>`;
+
+    if(identities.includes("禁言长老"))
+        options+=`<option value="silence">🔇 禁言目标</option>`;
+
     if(identities.includes("狼美人"))
-    options+=`<option value="🌹" ${cur==="🌹"?"selected":""}>🌹 狼美人目标</option>`;
+        options+=`<option value="wolfBeauty">🌹 狼美人目标</option>`;
+
     if(identities.includes("梦魇"))
-    options+=`<option value="😈" ${cur==="😈"?"selected":""}>😈 梦魇目标</option>`;
+        options+=`<option value="nightmare">😈 梦魇目标</option>`;
+
     if(identities.includes("黑市商人"))
-    options+=`<option value="🎁" ${cur==="🎁"?"selected":""}>🎁 商人目标</option>`;
+        options+=`<option value="merchant">🎁 商人目标</option>`;
+
     if(identities.includes("魔术师"))
-    options+=`<option value="🎭" ${cur==="🎭"?"selected":""}>🎭 魔术师目标</option>`;
+        options+=`<option value="magician">🎭 魔术师目标</option>`;
 
-    options+=`<option value="⭐" ${cur==="⭐"?"selected":""}>⭐ 特殊标记</option>`;
+    options+=`
+    <option value="undo">
+    ↩ 撤销标记
+    </option>
+    `;
 
-    return `<div class="markWrap">
-    <span class="markDisplay">${cur}</span>
-    <select class="markSelect" onchange="nightMarks[${index}]=this.value;showIdentityTable();">
-    ${options}
-    </select>
-    </div>`;
-    }
+    return `
+    <div class="markWrap">
 
+        <span class="markDisplay">${display}</span>
+
+        <select class="markSelect"
+
+        onchange="
+
+        if(this.value==='undo'){
+
+            if(nightMarks[${index}] &&
+               nightMarks[${index}].length){
+
+                nightMarks[${index}].pop();
+
+                if(!nightMarks[${index}].length){
+                    delete nightMarks[${index}];
+                }
+            }
+
+        }else if(this.value){
+
+            Object.keys(nightMarks).forEach(k=>{
+
+                nightMarks[k]=
+                (nightMarks[k]||[])
+                .filter(m=>m!==this.value);
+
+                if(!nightMarks[k].length){
+                    delete nightMarks[k];
+                }
+            });
+
+            if(!nightMarks[${index}]){
+                nightMarks[${index}]=[];
+            }
+
+            if(!nightMarks[${index}].includes(this.value)){
+                nightMarks[${index}].push(this.value);
+            }
+        }
+
+        showIdentityTable();
+
+        "
+
+        >
+
+        ${options}
+
+        </select>
+
+    </div>
+    `;
+}
 function showIdentityTable(){
     setPhaseTitle("夜晚");
 
@@ -1743,16 +2289,56 @@ function formatSpeechTime(sec){
     return m+":"+s;
 }
 
+function updateSpeechTimer(){
+
+    const main=
+    document.getElementById(
+        "speechMain"
+    );
+
+    const decimal=
+    document.getElementById(
+        "speechDecimal"
+    );
+
+    if(!main || !decimal){
+        return;
+    }
+
+    main.innerText=
+    formatSpeechTime(
+        speechSeconds
+    );
+
+    decimal.innerText=
+    "."+speechTenths;
+}
+
 function restartSpeechTimer(){
-    if(speechTimer) clearInterval(speechTimer);
+
+    if(speechTimer){
+        clearInterval(speechTimer);
+    }
+
     speechSeconds=0;
-    const el=document.getElementById("speechTimer");
-    if(el) el.textContent="00:00";
+    speechTenths=0;
+
+    updateSpeechTimer();
+
     speechTimer=setInterval(()=>{
-        speechSeconds++;
-        const t=document.getElementById("speechTimer");
-        if(t) t.textContent=formatSpeechTime(speechSeconds);
-    },1000);
+
+        speechTenths++;
+
+        if(speechTenths>=10){
+
+            speechTenths=0;
+            speechSeconds++;
+        }
+
+        updateSpeechTimer();
+
+    },100);
+
 }
 
 function showSpeechPage(){
@@ -1769,10 +2355,25 @@ function showSpeechPage(){
 
     document.getElementById("result").innerHTML=`
     <div id="speechTimer"
-    onclick="restartSpeechTimer()"
-    style="text-align:center;font-size:56px;margin-top:20px;margin-bottom:20px;user-select:none;cursor:pointer;">
-    00:00
-    </div>
+	onclick="restartSpeechTimer()"
+	style="
+	text-align:center;
+	font-size:56px;
+	margin-top:75px;
+	margin-bottom:0;
+	user-select:none;
+	cursor:pointer;
+	">
+	
+	<span id="speechMain">
+	00:00
+	</span>
+	
+	<span id="speechDecimal">
+	.0
+	</span>
+	
+	</div>
 
     <div class="bottomSpacer"></div>
 
@@ -1845,7 +2446,30 @@ function confirmStartVote(){
     }
 
     let tonightDeaths=[];
+    
+    currentDreamTarget=null;
 
+        for(let i=0;i<identities.length;i++){
+
+            if(hasMark(i,"dream")){
+                currentDreamTarget=i;
+                break;
+        }
+    }
+
+    if(
+        currentDreamTarget!==null &&
+        currentDreamTarget===lastDreamTarget
+    ){
+
+        if(!deadPlayers.has(currentDreamTarget)){
+
+            deadPlayers.add(currentDreamTarget);
+
+            tonightDeaths.push(currentDreamTarget);
+        }
+    }
+    
     manualNightDeaths.forEach(i=>{
 
 	    if(!tonightDeaths.includes(i)){
@@ -1853,11 +2477,32 @@ function confirmStartVote(){
 	    }
 	});
 
+    
+
     identities.forEach((r,i)=>{
 
-        const m=nightMarks[i]||"⬜";
+        const wolfKill=hasMark(i,"wolfKill");
+        const poison=hasMark(i,"poison");
+        const guard=hasMark(i,"guard");
+        const dream=hasMark(i,"dream");
 
-        if(m==="🐺" || m==="🧪"){
+        let die=false;
+
+        if(wolfKill){
+
+            if(!guard && !dream){
+                die=true;
+            }
+        }
+
+        if(poison){
+
+            if(!dream){
+                die=true;
+            }
+        }
+
+        if(die){
 
             if(!deadPlayers.has(i)){
                 deadPlayers.add(i);
@@ -1883,6 +2528,7 @@ function confirmStartVote(){
     }
 
     showConfirm("将进行今晚的结算",function(){
+        lastDreamTarget=currentDreamTarget;
         showDeathSettlementPage();
     });
 }
@@ -1971,6 +2617,7 @@ function confirmSkipNight(){
             nightMarks={};
             manualNightDeaths=[];
 
+            currentDreamTarget=null;
             night++;
             showIdentityTable();
         }
@@ -2364,6 +3011,7 @@ ${flowRows}
         onclick="
         nightMarks={};
         manualNightDeaths=[];
+        currentDreamTarget=null;
         night++;
         showIdentityTable()
         ">
@@ -2382,6 +3030,7 @@ ${flowRows}
             onclick="
             nightMarks={};
             manualNightDeaths=[];
+            currentDreamTarget=null;
             night++;
             showIdentityTable()
             ">
@@ -2406,11 +3055,12 @@ ${flowRows}
         <button
         class="bottomCapsuleBtn gold fixedBottomBtn voteBtnCapsule"
         onclick="
-nightMarks={};
-manualNightDeaths=[];
-night++;
-showIdentityTable()
-">
+        nightMarks={};
+        manualNightDeaths=[];
+        currentDreamTarget=null;
+        night++;
+        showIdentityTable()
+        ">
         进入下一晚
         </button>
         `;
@@ -2448,6 +3098,9 @@ function confirmRestart(){
 
             pkPlayers=null;
 
+            lastDreamTarget=null;
+            
+            currentDreamTarget=null;
 
             document.getElementById("result").innerHTML="";
 
@@ -2458,17 +3111,14 @@ function confirmRestart(){
 
             document.getElementById("gamePage")
             .classList.add("hidden");
+
+            if(speechTimer){
+                clearInterval(speechTimer);
+                speechTimer=null;
+}
         }
     );
 }
-
-
-createRoleRow("平民",1);
-createRoleRow("狼人",1);
-createRoleRow("预言家",1);
-createRoleRow("守卫",1);
-
-rebuildRoleOptions();
 
 document.addEventListener("touchstart",e=>{
 
@@ -2495,6 +3145,8 @@ document.addEventListener("touchcancel",()=>{
     .forEach(el=>el.classList.remove("pressing"));
 
 },{passive:true});
+
+applyPreset("witch6");
 
 </script>
 
