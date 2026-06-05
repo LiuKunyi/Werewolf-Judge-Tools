@@ -1992,10 +1992,12 @@ function buildMarkControl(index){
     : "⬜";
 
     let options=`
-    <option value="">
-    选择标记
-    </option>
-    `;
+	<option value=""
+	selected
+	disabled>
+	（请选择今晚行动标记）
+	</option>
+	`;
 
     if(identities.some(r=>evilRoles.includes(r)))
         options+=`<option value="wolfKill">🐺 狼刀目标</option>`;
