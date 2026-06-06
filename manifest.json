@@ -1,0 +1,16 @@
+{
+  "name": "狼人杀法官助手",
+  "short_name": "狼人杀",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#1f2230",
+  "theme_color": "#1f2230",
+
+  "icons": [
+    {
+      "src": "icon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
