@@ -2159,14 +2159,6 @@ function buildMarkControl(index){
 	        nightMarks[${index}].push(this.value);
 	    }
 	}
-	            if(!nightMarks[${index}]){
-	                nightMarks[${index}]=[];
-	            }
-	
-	            if(!nightMarks[${index}].includes(this.value)){
-	                nightMarks[${index}].push(this.value);
-	            }
-	        }
 
         showIdentityTable();
 
@@ -2729,6 +2721,7 @@ function confirmSkipNight(){
         function(){
 
             nightMarks={};
+            magicianTargets=[];
             manualNightDeaths=[];
 
             currentDreamTarget=null;
@@ -3172,6 +3165,7 @@ ${flowRows}
         class="bottomCapsuleBtn gold fixedBottomBtn voteBtnCapsule"
         onclick="
         nightMarks={};
+        magicianTargets=[];
         manualNightDeaths=[];
         currentDreamTarget=null;
         night++;
