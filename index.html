@@ -1,6 +1,15 @@
 <!DOCTYPE html>
 <html lang="zh">
 <head>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color"
+content="#1f2230">
+<meta name="apple-mobile-web-app-capable"
+content="yes">
+<meta name="apple-mobile-web-app-status-bar-style"
+content="black-translucent">
+<meta name="apple-mobile-web-app-title"
+content="狼人杀">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>狼人杀</title>
@@ -659,6 +668,11 @@ select option{
     opacity:.6;
 }
 
+#speechTimer{
+    position:relative;
+    left:5px;;
+}
+
 #speechDecimal{
 
     font-size:38px;
@@ -835,6 +849,7 @@ let settlementText='昨晚是平安夜';
 let lastDreamTarget=null;
 let currentDreamTarget=null;
 let permanentMarked=new Set();
+let foolPlayer=null;
 let currentPage="identity";
 let wolfWinMode="edge";
 let setupRoles=[];
@@ -1974,7 +1989,7 @@ function buildMarkDisplay(index){
     const display=
     marks.length
     ? marks.map(m=>MARKS[m].icon).join("")
-    : "⬜";
+    : "▢";
 
     return `
     <div class="markWrap">
@@ -1985,7 +2000,7 @@ function buildMarkDisplay(index){
 function buildMarkControl(index){
 
     if(deadPlayers.has(index)){
-        return `<div class="markWrap"><span class="markDisplay">⬜</span></div>`;
+        return `<div class="markWrap"><span class="markDisplay">▢</span></div>`;
     }
 
     const marks=nightMarks[index]||[];
@@ -1993,19 +2008,18 @@ function buildMarkControl(index){
     const display=
     marks.length
     ? marks.map(m=>MARKS[m].icon).join("")
-    : "⬜";
+    : "▢";
 
     
     let options=`
-        <option value=""
-        hidden
-        selected>
-        </option>
 
-        <option value=""
+        <option
+        value=""
+        selected
         disabled>
         （请选择今晚行动标记）
         </option>
+
     `;
 
     if(identities.some(r=>evilRoles.includes(r)))
@@ -2484,7 +2498,30 @@ function confirmStartVote(){
 	    }
 	});
 
-    
+    const dreamerIndex=
+    identities.findIndex(
+        r=>r==="摄梦人"
+    );
+
+    if(
+        dreamerIndex!==-1 &&
+        tonightDeaths.includes(
+            dreamerIndex
+        ) &&
+        currentDreamTarget!==null &&
+        !tonightDeaths.includes(
+            currentDreamTarget
+        )
+    ){
+
+        deadPlayers.add(
+            currentDreamTarget
+        );
+
+        tonightDeaths.push(
+            currentDreamTarget
+        );
+    }
 
     identities.forEach((r,i)=>{
 
@@ -2676,6 +2713,8 @@ function startVote(players=null){
 
         if(deadPlayers.has(i)) return;
 
+        if(i===foolPlayer) return;
+
         if(isPKVote && pkPlayers.includes(i+1)) return;
 
         alivePlayers.push(i+1);
@@ -2704,7 +2743,10 @@ function showVotePage(){
     let targets=pkPlayers||alivePlayers;
 
     targets=targets.filter(
-        x=>!deadPlayers.has(x-1)
+        x=>
+        !deadPlayers.has(x-1)
+        &&
+        (x-1)!==foolPlayer
     );
 
     let html=`
@@ -2839,15 +2881,58 @@ function finishVoting(){
 
     if(maxPlayers.length===1 && maxVote>0){
 
-        resultText=maxPlayers[0]+"号玩家出局";
+        votedOutPlayer=
+        parseInt(maxPlayers[0],10)-1;
 
-        votedOutPlayer=parseInt(maxPlayers[0],10)-1;
+        if(
+            identities[votedOutPlayer]==="愚者"
+            &&
+            foolPlayer===null
+        ){
 
-        if(!deadPlayers.has(votedOutPlayer)){
-            deadPlayers.add(votedOutPlayer);
-    }
+            if(
+                confirm(
+                "得票最多的是愚者，发动技能？"
+                )
+            ){
 
+                foolPlayer=
+                votedOutPlayer;
 
+                resultText=
+                "无人出局";
+
+            }else{
+
+                resultText=
+                maxPlayers[0]+"号玩家出局";
+
+                if(
+                    !deadPlayers.has(
+                        votedOutPlayer
+                    )
+                ){
+                    deadPlayers.add(
+                        votedOutPlayer
+                    );
+                }
+            }
+
+        }else{
+
+            resultText=
+            maxPlayers[0]+"号玩家出局";
+
+            if(
+                !deadPlayers.has(
+                    votedOutPlayer
+                )
+            ){
+                deadPlayers.add(
+                    votedOutPlayer
+                );
+            }
+        }
     }
     else if(maxPlayers.length>1){
 
@@ -3109,6 +3194,8 @@ function confirmRestart(){
             
             currentDreamTarget=null;
 
+            foolPlayer=null;
+
             document.getElementById("result").innerHTML="";
 
             setPhaseTitle("配置本局身份");
@@ -3174,7 +3261,52 @@ document.addEventListener(
 
 </script>
 
+<script>
 
+if("serviceWorker" in navigator){
+
+    navigator.serviceWorker
+    .register("./sw.js")
+    .then(reg=>{
+
+        reg.addEventListener(
+            "updatefound",
+            ()=>{
+
+                const newWorker=
+                reg.installing;
+
+                newWorker.addEventListener(
+                    "statechange",
+                    ()=>{
+
+                        if(
+                            newWorker.state==="installed"
+                            &&
+                            navigator.serviceWorker.controller
+                        ){
+
+                            showConfirm(
+                                "发现新版本，刷新以立即更新",
+                                ()=>{
+
+                                    location.reload();
+
+                                }
+                            );
+
+                        }
+
+                    }
+                );
+
+            }
+        );
+
+    });
+
+}
+</script>
 
 </body>
 </html>
