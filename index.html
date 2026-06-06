@@ -799,8 +799,8 @@ let night=1;
 let speechTimer=null;
 let speechSeconds=0;
 let speechTenths=0;
-
 let nightMarks={};
+let magicianTargets=[];
 
 const MARKS={
 
@@ -2097,25 +2097,76 @@ function buildMarkControl(index){
 
         }else if(this.value){
 
-            Object.keys(nightMarks).forEach(k=>{
-
-                nightMarks[k]=
-                (nightMarks[k]||[])
-                .filter(m=>m!==this.value);
-
-                if(!nightMarks[k].length){
-                    delete nightMarks[k];
-                }
-            });
-
-            if(!nightMarks[${index}]){
-                nightMarks[${index}]=[];
-            }
-
-            if(!nightMarks[${index}].includes(this.value)){
-                nightMarks[${index}].push(this.value);
-            }
-        }
+			if(this.value==="magician"){
+	
+			magicianTargets=
+	        magicianTargets.filter(
+	            x=>x!==${index}
+	        );
+	
+	        magicianTargets.push(
+	            ${index}
+	        );
+	
+	        while(
+	            magicianTargets.length>2
+	        ){
+	
+	            const removed=
+	            magicianTargets.shift();
+	
+	            if(
+	                nightMarks[removed]
+	            ){
+	
+	                nightMarks[removed]=
+	                nightMarks[removed]
+	                .filter(
+	                    m=>m!=="magician"
+	                );
+	
+	                if(
+	                    !nightMarks[removed]
+	                    .length
+	                ){
+	                    delete nightMarks[
+	                        removed
+	                    ];
+	                }
+	            }
+	        }
+	
+	    }else{
+	
+	        Object.keys(nightMarks).forEach(k=>{
+	
+	            nightMarks[k]=
+	            (nightMarks[k]||[])
+	            .filter(m=>m!==this.value);
+	
+	            if(!nightMarks[k].length){
+	                delete nightMarks[k];
+	            }
+	        });
+	
+	    }
+	
+	    if(!nightMarks[${index}]){
+	        nightMarks[${index}]=[];
+	    }
+	
+	    if(!nightMarks[${index}].includes(this.value)){
+	        nightMarks[${index}].push(this.value);
+	    }
+	}
+	            if(!nightMarks[${index}]){
+	                nightMarks[${index}]=[];
+	            }
+	
+	            if(!nightMarks[${index}].includes(this.value)){
+	                nightMarks[${index}].push(this.value);
+	            }
+	        }
 
         showIdentityTable();
 
