@@ -1,32 +1,36 @@
-const CACHE_NAME = "werewolf-v1.5.5";
+const CACHE_NAME="werewolf-v1.6.0";
 
-const FILES = [
+const FILES=[
     "./",
     "./index.html",
     "./manifest.json",
     "./icon.png"
 ];
 
-self.addEventListener("install", event => {
+self.addEventListener("install",event=>{
+
+    self.skipWaiting();
 
     event.waitUntil(
 
         caches.open(CACHE_NAME)
-        .then(cache => cache.addAll(FILES))
+        .then(cache=>cache.addAll(FILES))
     );
 });
 
-self.addEventListener("activate", event => {
+self.addEventListener("activate",event=>{
+
+    self.clients.claim();
 
     event.waitUntil(
 
-        caches.keys().then(keys => {
+        caches.keys().then(keys=>{
 
             return Promise.all(
 
-                keys.map(key => {
+                keys.map(key=>{
 
-                    if(key !== CACHE_NAME){
+                    if(key!==CACHE_NAME){
 
                         return caches.delete(key);
 
@@ -41,16 +45,21 @@ self.addEventListener("activate", event => {
     );
 });
 
-self.addEventListener("fetch", event => {
+self.addEventListener("fetch",event=>{
 
     event.respondWith(
 
         caches.match(event.request)
-        .then(response => {
+        .then(response=>{
 
-            return response || fetch(event.request);
+            return response||fetch(event.request);
 
-    self.addEventListener(
+        })
+
+    );
+});
+
+self.addEventListener(
     "message",
     event=>{
 
@@ -65,8 +74,3 @@ self.addEventListener("fetch", event => {
 
     }
 );
-
-        })
-
-    );
-});
