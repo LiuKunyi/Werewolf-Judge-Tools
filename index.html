@@ -2065,11 +2065,14 @@ function buildMarkControl(index){
     if(identities.includes("魔术师"))
         options+=`<option value="magician">🎭 魔术师目标</option>`;
 
-    options+=`
-    <option value="undo">
-    ↩ 撤销标记
-    </option>
-    `;
+    if(marks.length){
+
+       options+=`
+       <option value="undo">
+       ↩ 撤销标记
+       </option>
+       `;
+   }
 
     return `
     <div class="markWrap">
