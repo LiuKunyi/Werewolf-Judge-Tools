@@ -734,10 +734,24 @@ document.addEventListener("copy",e=>e.preventDefault());
 document.addEventListener("cut",e=>e.preventDefault());
 document.addEventListener("contextmenu",e=>e.preventDefault());
 
-window.addEventListener("beforeunload",function(e){
-    e.preventDefault();
-    e.returnValue="";
-});
+if(
+
+    !window.matchMedia(
+        "(display-mode: standalone)"
+    ).matches
+
+){
+
+    window.addEventListener(
+        "beforeunload",
+        function(e){
+
+            e.preventDefault();
+            e.returnValue="";
+        }
+    );
+
+}
 
 
 
@@ -3290,7 +3304,14 @@ if("serviceWorker" in navigator){
                                 "发现新版本，刷新以立即更新",
                                 ()=>{
 
-                                    location.reload();
+                                    if(reg.waiting){
+
+									    reg.waiting.postMessage({
+									        type:"SKIP_WAITING"
+									    });
+									}
+									
+									location.reload();
 
                                 }
                             );
