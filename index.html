@@ -672,7 +672,7 @@ select option{
 
 #speechTimer{
     position:relative;
-    left:5px;;
+    left:5px;
 }
 
 #speechDecimal{
@@ -847,6 +847,11 @@ text:"魔术师目标"
 silence:{
 icon:"🔇",
 text:"禁言目标"
+},
+
+hunterDemon:{
+icon:"⚔️",
+text:"猎魔目标"
 }
 
 };
@@ -860,13 +865,50 @@ function hasMark(index,type){
 
 }
 
+function checkWolfBeautyDeath(){
+
+    const wolfBeautyIndex=
+    identities.findIndex(
+        r=>r==="狼美人"
+    );
+
+    if(
+        wolfBeautyIndex===-1 ||
+        !deadPlayers.has(
+            wolfBeautyIndex
+        )
+    ){
+        return;
+    }
+
+    for(let i=0;i<identities.length;i++){
+
+        if(
+            hasMark(i,"wolfBeauty")
+            &&
+            !deadPlayers.has(i)
+        ){
+
+            deadPlayers.add(i);
+
+            if(
+                !manualNightDeaths.includes(i)
+            ){
+                manualNightDeaths.push(i);
+            }
+        }
+    }
+}
+
 let manualNightDeaths=[];
 let settlementText='昨晚是平安夜';
 let lastDreamTarget=null;
 let currentDreamTarget=null;
 let permanentMarked=new Set();
 let foolPlayer=null;
+let bloodMoonPendingDeath=null;
 let currentPage="identity";
+let voteResultLocked=false;
 let wolfWinMode="edge";
 let setupRoles=[];
 let currentPreset="witch6";
@@ -1028,6 +1070,7 @@ function getNightOrderText(){
 
     if(night===1 && identities.includes("黑市商人"))
 	    order.push("黑市商人");
+
     
     if(identities.includes("禁言长老"))
         order.push("禁言长老");
@@ -1067,12 +1110,15 @@ function getNightOrderText(){
 
     if(identities.includes("狐狸"))
         order.push("狐狸");
+
+    if(night>1 && identities.includes("守墓人"))
+		order.push("守墓人")
         
+    if(night>1 && identities.includes("猎魔人"))
+		order.push("猎魔人")
+
     if(night>1 && identities.includes("黑市商人"))
 		order.push("幸运儿")
-  
-	if(night>1 && identities.includes("守墓人"))
-		order.push("守墓人")
 
     if(identities.includes("猎人"))
         order.push("猎人");
@@ -1874,11 +1920,13 @@ function toggleDead(index){
             function(){
 
                 deadPlayers.add(index);
-                delete nightMarks[index];
 
                 if(!manualNightDeaths.includes(index)){
                     manualNightDeaths.push(index);
                 }
+
+                checkWolfBeautyDeath();
+
                 refreshCurrentPage();
             }
         )
@@ -2015,9 +2063,23 @@ function buildMarkDisplay(index){
 }
 function buildMarkControl(index){
 
-    if(deadPlayers.has(index)){
-        return `<div class="markWrap"><span class="markDisplay">▢</span></div>`;
-    }
+    const roleAlive=name=>{
+
+        const idx=
+        identities.findIndex(
+            r=>r===name
+        );
+
+        return (
+            idx!==-1 &&
+            !deadPlayers.has(idx)
+        );
+    };
+
+    const roleIndex=name=>
+        identities.findIndex(
+            r=>r===name
+        );
 
     const marks=nightMarks[index]||[];
 
@@ -2025,6 +2087,17 @@ function buildMarkControl(index){
     marks.length
     ? marks.map(m=>MARKS[m].icon).join("")
     : "▢";
+
+    if(deadPlayers.has(index)){
+
+        return `
+        <div class="markWrap">
+            <span class="markDisplay">
+                ${display}
+            </span>
+        </div>
+        `;
+    }
 
     
     let options=`
@@ -2040,30 +2113,35 @@ function buildMarkControl(index){
 
     if(identities.some(r=>evilRoles.includes(r)))
         options+=`<option value="wolfKill">🐺 狼刀目标</option>`;
-
-    if(identities.includes("守卫"))
-        options+=`<option value="guard">🛡️ 守护目标</option>`;
-
-    if(identities.includes("女巫"))
-        options+=`<option value="poison">🧪 女巫目标</option>`;
-
-    if(identities.includes("摄梦人"))
-        options+=`<option value="dream">💤 摄梦目标</option>`;
-
-    if(identities.includes("禁言长老"))
+    
+    if(roleAlive("魔术师"))
+        options+=`<option value="magician">🎭 魔术师目标</option>`;
+    
+    if(roleAlive("禁言长老"))
         options+=`<option value="silence">🔇 禁言目标</option>`;
 
-    if(identities.includes("狼美人"))
-        options+=`<option value="wolfBeauty">🌹 狼美人目标</option>`;
-
-    if(identities.includes("梦魇"))
-        options+=`<option value="nightmare">😈 梦魇目标</option>`;
-
-    if(identities.includes("黑市商人"))
+    if(night===1 &&
+        roleAlive("黑市商人") && roleIndex("黑市商人")!==index)
         options+=`<option value="merchant">🎁 商人目标</option>`;
 
-    if(identities.includes("魔术师"))
-        options+=`<option value="magician">🎭 魔术师目标</option>`;
+    if(roleAlive("守卫"))
+        options+=`<option value="guard">🛡️ 守护目标</option>`;
+
+    if(roleAlive("女巫"))
+        options+=`<option value="poison">🧪 女巫目标</option>`;
+    
+    if(roleAlive("梦魇") && roleIndex("梦魇")!==index)
+        options+=`<option value="nightmare">😈 梦魇目标</option>`;
+
+    if(roleAlive("摄梦人") && roleIndex("摄梦人")!==index)
+        options+=`<option value="dream">💤 摄梦目标</option>`;
+
+    if(roleAlive("狼美人") && roleIndex("狼美人")!==index)
+        options+=`<option value="wolfBeauty">🌹 狼美人目标</option>`;
+
+    if(night>1 &&
+        roleAlive("猎魔人") && roleIndex("猎魔人")!==index)
+        options+=`<option value="hunterDemon">⚔️ 猎魔目标</option>`;
 
     if(marks.length){
 
@@ -2090,6 +2168,18 @@ function buildMarkControl(index){
 
                 nightMarks[${index}].pop();
 
+                if(
+                    magicianTargets.includes(
+                        ${index}
+                    )
+                ){
+
+                    magicianTargets=
+                    magicianTargets.filter(
+                        x=>x!==${index}
+                    );
+                }
+
                 if(!nightMarks[${index}].length){
                     delete nightMarks[${index}];
                 }
@@ -2097,68 +2187,60 @@ function buildMarkControl(index){
 
         }else if(this.value){
 
-			if(this.value==="magician"){
-	
-			magicianTargets=
-	        magicianTargets.filter(
-	            x=>x!==${index}
-	        );
-	
-	        magicianTargets.push(
-	            ${index}
-	        );
-	
-	        while(
-	            magicianTargets.length>2
-	        ){
-	
-	            const removed=
-	            magicianTargets.shift();
-	
-	            if(
-	                nightMarks[removed]
-	            ){
-	
-	                nightMarks[removed]=
-	                nightMarks[removed]
-	                .filter(
-	                    m=>m!=="magician"
-	                );
-	
-	                if(
-	                    !nightMarks[removed]
-	                    .length
-	                ){
-	                    delete nightMarks[
-	                        removed
-	                    ];
-	                }
-	            }
-	        }
-	
-	    }else{
-	
-	        Object.keys(nightMarks).forEach(k=>{
-	
-	            nightMarks[k]=
-	            (nightMarks[k]||[])
-	            .filter(m=>m!==this.value);
-	
-	            if(!nightMarks[k].length){
-	                delete nightMarks[k];
-	            }
-	        });
-	
-	    }
-	
-	    if(!nightMarks[${index}]){
-	        nightMarks[${index}]=[];
-	    }
-	
-	    if(!nightMarks[${index}].includes(this.value)){
-	        nightMarks[${index}].push(this.value);
-	    }
-	}
+            const mark=this.value;
+
+            if(mark==='magician'){
+
+                magicianTargets=
+                magicianTargets.filter(function(x){
+                    return x!==${index};
+                });
+
+                magicianTargets.push(${index});
+
+                while(magicianTargets.length>2){
+
+                    const removed=
+                    magicianTargets.shift();
+
+                    if(nightMarks[removed]){
+
+                        nightMarks[removed]=
+                        nightMarks[removed]
+                        .filter(function(m){
+                            return m!=='magician';
+                        });
+
+                        if(!nightMarks[removed].length){
+                            delete nightMarks[removed];
+                        }
+                    }
+                }
+
+            }else{
+
+                Object.keys(nightMarks).forEach(function(k){
+
+                    nightMarks[k]=
+                    (nightMarks[k]||[])
+                    .filter(function(m){
+                        return m!==mark;
+                    });
+
+                    if(!nightMarks[k].length){
+                        delete nightMarks[k];
+                    }
+                });
+            }
+
+            if(!nightMarks[${index}]){
+                nightMarks[${index}]=[];
+            }
+
+            if(!nightMarks[${index}].includes(mark)){
+                nightMarks[${index}].push(mark);
+            }
+        }
 
         showIdentityTable();
 
@@ -2468,6 +2550,73 @@ function showSpeechPage(){
     restartSpeechTimer();
 }
 
+function startPKSpeech(players){
+
+    window.pkPendingPlayers=players;
+
+    setPhaseTitle("白天");
+
+    document.getElementById("playerText").innerText="";
+    document.getElementById("identity").classList.add("hidden");
+    document.getElementById("mainButton").classList.add("hidden");
+    document.getElementById("nextButton").classList.add("hidden");
+
+    if(speechTimer){
+        clearInterval(speechTimer);
+    }
+
+    speechTimer=null;
+    speechSeconds=0;
+    speechTenths=0;
+
+    document.getElementById("result").innerHTML=`
+    <div id="speechTimer"
+    onclick="restartSpeechTimer()"
+    style="
+    text-align:center;
+    font-size:56px;
+    margin-top:75px;
+    margin-bottom:0;
+    user-select:none;
+    cursor:pointer;
+    ">
+
+        <span id="speechMain">
+        00:00
+        </span>
+
+        <span id="speechDecimal">
+        .0
+        </span>
+
+    </div>
+
+    <div class="bottomSpacer"></div>
+
+    <button
+    class="bottomCapsuleBtn blue fixedBottomBtn"
+    onclick="confirmEnterPKVote()">
+    结束发言环节
+    </button>
+    `;
+
+    restartSpeechTimer();
+}
+
+function confirmEnterPKVote(){
+
+    showConfirm(
+        "将进入投票环节",
+        function(){
+
+            startVote(
+                window.pkPendingPlayers
+            );
+
+        }
+    );
+}
+
 function needThirdPartyConfirm(){
 
     const hasCupid=identities.includes("丘比特");
@@ -2529,6 +2678,27 @@ function confirmStartVote(){
     }
 
     let tonightDeaths=[];
+    if(
+        bloodMoonPendingDeath!==null
+    ){
+
+        if(
+            !deadPlayers.has(
+                bloodMoonPendingDeath
+            )
+        ){
+
+            deadPlayers.add(
+                bloodMoonPendingDeath
+            );
+
+            tonightDeaths.push(
+                bloodMoonPendingDeath
+            );
+        }
+
+        bloodMoonPendingDeath=null;
+    }
     
     currentDreamTarget=null;
 
@@ -2585,10 +2755,47 @@ function confirmStartVote(){
         );
     }
 
+    const wolfBeautyIndex=
+    identities.findIndex(
+        r=>r==="狼美人"
+    );
+
+    if(
+        wolfBeautyIndex!==-1 &&
+        deadPlayers.has(
+            wolfBeautyIndex
+            )
+            
+    ){
+
+        for(let i=0;i<identities.length;i++){
+
+            if(
+                hasMark(i,"wolfBeauty")
+            ){
+
+                if(
+                    !deadPlayers.has(i)
+                ){
+
+                    deadPlayers.add(i);
+
+                    if(
+                        !tonightDeaths.includes(i)
+                    ){
+                        tonightDeaths.push(i);
+                    }
+                }
+            }
+        }
+    }
+
     identities.forEach((r,i)=>{
 
         const wolfKill=hasMark(i,"wolfKill");
         const poison=hasMark(i,"poison");
+        const isDemonHunter=
+            identities[i]==="猎魔人";
         const guard=hasMark(i,"guard");
         const dream=hasMark(i,"dream");
 
@@ -2603,7 +2810,10 @@ function confirmStartVote(){
 
         if(poison){
 
-            if(!dream){
+            if(
+                !dream &&
+                !isDemonHunter
+            ){
                 die=true;
             }
         }
@@ -2619,7 +2829,80 @@ function confirmStartVote(){
             }
         }
     });  
+
+    const hunterIndex=
+identities.findIndex(
+    r=>r==="猎魔人"
+);
+
+if(
+    hunterIndex!==-1 &&
+    !deadPlayers.has(
+        hunterIndex
+    )
+){
+
+    let target=null;
+
+    for(
+        let i=0;
+        i<identities.length;
+        i++
+    ){
+
+        if(
+            hasMark(
+                i,
+                "hunterDemon"
+            )
+        ){
+            target=i;
+            break;
+        }
+    }
+
+    if(target!==null){
+
+        if(
+            getFactionAtIndex(target)
+            ==="狼人"
+        ){
+
+            deadPlayers.add(
+                target
+            );
+
+            if(
+                !tonightDeaths.includes(
+                    target
+                )
+            ){
+                tonightDeaths.push(
+                    target
+                );
+            }
+
+        }else{
+
+            deadPlayers.add(
+                hunterIndex
+            );
+
+            if(
+                !tonightDeaths.includes(
+                    hunterIndex
+                )
+            ){
+                tonightDeaths.push(
+                    hunterIndex
+                );
+            }
+        }
+    }
+}
   
+    checkWolfBeautyDeath();
+
     if(tonightDeaths.length){
 
     const sortedDeaths=[...tonightDeaths]
@@ -2723,7 +3006,6 @@ function confirmSkipNight(){
             nightMarks={};
             magicianTargets=[];
             manualNightDeaths=[];
-
             currentDreamTarget=null;
             night++;
             showIdentityTable();
@@ -2763,6 +3045,10 @@ function openVotePlayer(voter){
 function startVote(players=null){
 
     votes={};
+
+    votedOutPlayer=null;
+
+    voteResultLocked=false;
 
     selectedVote=null;
 
@@ -2911,7 +3197,8 @@ function confirmVote(){
 
 
 function finishVoting(){
-        setPhaseTitle("白天");
+        
+    setPhaseTitle("白天");
 
     currentPage="voteResult";
 
@@ -2942,7 +3229,37 @@ function finishVoting(){
 
     let resultText="无人出局";
 
-    if(maxPlayers.length===1 && maxVote>0){
+    let voteFlow={};
+
+    voteLogs.forEach(v=>{
+
+        if(!voteFlow[v.target]){
+            voteFlow[v.target]=[];
+        }
+
+        voteFlow[v.target].push(v.voter);
+    });
+
+    const voteSummary=
+    Object.entries(voteFlow)
+    .map(([to,from])=>
+
+        from.join(",")+
+        "→"+
+        (
+            to==="弃票"
+          ?"弃"
+          :to+"号"
+     )
+
+)
+.join("\n");
+
+    if(
+        !voteResultLocked &&
+        maxPlayers.length===1 &&
+        maxVote>0
+    ){
 
         votedOutPlayer=
         parseInt(maxPlayers[0],10)-1;
@@ -2955,7 +3272,8 @@ function finishVoting(){
 
             if(
                 confirm(
-                "得票最多的是愚者，发动技能？"
+                voteSummary+
+                "\n\n得票最多的是愚者，发动技能？"
                 )
             ){
 
@@ -2964,6 +3282,39 @@ function finishVoting(){
 
                 resultText=
                 "无人出局";
+
+                voteResultLocked=true;
+            }
+
+        }else if(
+            identities[votedOutPlayer]==="血月使徒"
+        ){
+
+            const otherWolfAlive=
+            identities.some((role,i)=>
+
+                i!==votedOutPlayer &&
+
+                !deadPlayers.has(i) &&
+
+                getFactionAtIndex(i)==="狼人"
+            );
+
+            if(
+                !otherWolfAlive &&
+                confirm(
+                    voteSummary+
+                    "\n\n得票最多的是血月使徒，发动技能？"
+                )
+            ){
+
+                bloodMoonPendingDeath=
+                votedOutPlayer;
+
+                resultText=
+                "无人出局";
+
+                voteResultLocked=true;
 
             }else{
 
@@ -2978,6 +3329,10 @@ function finishVoting(){
                     deadPlayers.add(
                         votedOutPlayer
                     );
+
+                    checkWolfBeautyDeath();
+
+                    voteResultLocked=true;
                 }
             }
 
@@ -2994,9 +3349,14 @@ function finishVoting(){
                 deadPlayers.add(
                     votedOutPlayer
                 );
+
+                checkWolfBeautyDeath();
+
+                voteResultLocked=true;
             }
         }
     }
+
     else if(maxPlayers.length>1){
 
 
@@ -3011,18 +3371,6 @@ if(isPKVote){
     }
 
     }
-
-
-    let voteFlow={};
-
-    voteLogs.forEach(v=>{
-
-        if(!voteFlow[v.target]){
-            voteFlow[v.target]=[];
-        }
-
-        voteFlow[v.target].push(v.voter);
-    });
 
     let flowRows=Object.entries(voteFlow)
 
@@ -3065,11 +3413,11 @@ if(isPKVote){
     })
     .join("");
 
-let flowText=`
-<table class="voteFlowTable">
-${flowRows}
-</table>
-`;
+    let flowText=`
+    <table class="voteFlowTable">
+    ${flowRows}
+    </table>
+    `;
 
     let html=getWinText()+`
     <div class="player">
@@ -3185,6 +3533,7 @@ ${flowRows}
             class="bottomCapsuleBtn gold fixedBottomBtn voteBtnCapsule"
             onclick="
             nightMarks={};
+            magicianTargets=[];
             manualNightDeaths=[];
             currentDreamTarget=null;
             night++;
@@ -3199,7 +3548,7 @@ ${flowRows}
             html+=`
             <button
             class="bottomCapsuleBtn gold fixedBottomBtn"
-            onclick='startVote(${JSON.stringify(maxPlayers)})'>
+            onclick='startPKSpeech(${JSON.stringify(maxPlayers)})'>
             PK
             </button>
             `;
@@ -3212,6 +3561,7 @@ ${flowRows}
         class="bottomCapsuleBtn gold fixedBottomBtn voteBtnCapsule"
         onclick="
         nightMarks={};
+        magicianTargets=[];
         manualNightDeaths=[];
         currentDreamTarget=null;
         night++;
@@ -3245,6 +3595,10 @@ function confirmRestart(){
             playerBaseFaction=[];
             permanentMarked=new Set();
             nightMarks={};
+            voteFinishedPlayers=[];
+            voteLogs=[];
+            alivePlayers=[];
+            magicianTargets=[];
             manualNightDeaths=[];
             settlementText='昨晚是平安夜';
 
@@ -3259,6 +3613,10 @@ function confirmRestart(){
             currentDreamTarget=null;
 
             foolPlayer=null;
+
+            bloodMoonPendingDeath=null;
+
+            voteResultLocked=false;
 
             document.getElementById("result").innerHTML="";
 
