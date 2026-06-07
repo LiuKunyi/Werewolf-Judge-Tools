@@ -18,7 +18,7 @@ https://liukunyi.github.io/Werewolf-Judge-Tools/
 
 离线版：
 
-访问https://liukunyi.github.io/Werewolf-Judge-Tools/后，选择浏览器上的作为应用安装或添加到主屏幕即可离线使用（支持Edge、Chrome、Safari 浏览器等）
+访问 https://liukunyi.github.io/Werewolf-Judge-Tools/ 后，选择浏览器上的作为应用安装或添加到主屏幕即可离线使用（支持Edge、Chrome、Safari 浏览器等）
 
 ---
 
