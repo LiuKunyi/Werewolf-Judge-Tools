@@ -1,4 +1,4 @@
-const CACHE_NAME="werewolf-1.7.0";
+const CACHE_NAME="werewolf-1.7.1";
 
 const FILES=[
     "./",
