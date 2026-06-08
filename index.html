@@ -911,6 +911,7 @@ let bloodMoonPendingDeath=null;
 let currentPage="identity";
 let voteResultLocked=false;
 let wolfWinMode="edge";
+let controlRule=false;
 let setupRoles=[];
 let currentPreset="witch6";
 let showAvailableRoles=false;
@@ -1309,6 +1310,20 @@ function renderCapsuleSetup(){
 
     </div>
 
+    <div
+    id="controlRuleBtn"
+    class="setupTextBtn">
+
+    狼人控场结算：
+
+    ${
+        controlRule
+        ?"开启"
+        :"关闭"
+    }
+
+    </div>
+
     </div>
     `;
 
@@ -1472,7 +1487,7 @@ function renderCapsuleSetup(){
 
     document.getElementById(
     "wolfWinModeBtn"
-).onclick=function(){
+    ).onclick=function(){
 
     wolfWinMode=
     wolfWinMode==="edge"
@@ -1481,6 +1496,15 @@ function renderCapsuleSetup(){
 
     renderCapsuleSetup();
 };
+
+    document.getElementById(
+        "controlRuleBtn"
+    ).onclick=function(){
+
+        controlRule=!controlRule;
+
+        renderCapsuleSetup();
+    };
 
 }
 
@@ -1989,7 +2013,12 @@ function getWinText(){
         antiControlRoles.includes(role)
     );
 
-    if(wolf>0 && wolf >= (god + villager) && !hasAntiControlRole){
+    if(
+        controlRule &&
+        wolf>0 &&
+        wolf >= (god + villager) &&
+        !hasAntiControlRole
+    ){
 
         if(specialThirdAlive){
             return '<div class="player" style="color:#d0d0d0">第三方胜利</div>';
@@ -2670,6 +2699,57 @@ function needThirdPartyConfirm(){
     return false;
 }
 
+function bearRoars(){
+
+    const bearIndex=
+    identities.findIndex(
+        r=>r==="训熊师"
+    );
+
+    if(bearIndex===-1){
+        return null;
+    }
+
+    if(deadPlayers.has(bearIndex)){
+        return false;
+    }
+
+    let left=bearIndex;
+
+    do{
+
+        left--;
+
+        if(left<0){
+            left=identities.length-1;
+        }
+
+    }while(
+        left!==bearIndex &&
+        deadPlayers.has(left)
+    );
+
+    let right=bearIndex;
+
+    do{
+
+        right++;
+
+        if(right>=identities.length){
+            right=0;
+        }
+
+    }while(
+        right!==bearIndex &&
+        deadPlayers.has(right)
+    );
+
+    return (
+        getFactionAtIndex(left)==="狼人" ||
+        getFactionAtIndex(right)==="狼人"
+    );
+}
+
 function confirmStartVote(){
 
     if(needThirdPartyConfirm()){
@@ -2679,6 +2759,17 @@ function confirmStartVote(){
     }
 
     let tonightDeaths=[];
+    
+    const hunterAliveBeforeNight=
+        identities.some(
+            (r,i)=>
+            r==="猎魔人" &&
+            !deadPlayers.has(i)
+        );
+
+    const bearResultBeforeNight=
+        bearRoars();
+
     if(
         bloodMoonPendingDeath!==null
     ){
@@ -2730,6 +2821,8 @@ function confirmStartVote(){
         tonightDeaths.push(i);
 	    }
 	});
+
+    
 
     const dreamerIndex=
     identities.findIndex(
@@ -2832,16 +2925,14 @@ function confirmStartVote(){
     });  
 
     const hunterIndex=
-identities.findIndex(
+    identities.findIndex(
     r=>r==="猎魔人"
 );
 
-if(
-    hunterIndex!==-1 &&
-    !deadPlayers.has(
-        hunterIndex
+    if(
+        hunterAliveBeforeNight
     )
-){
+    {
 
     let target=null;
 
@@ -2906,15 +2997,24 @@ if(
 
     if(tonightDeaths.length){
 
-    const sortedDeaths=[...tonightDeaths]
-        .sort((a,b)=>a-b);
+        const sortedDeaths=[...tonightDeaths]
+            .sort((a,b)=>a-b);
 
-    settlementText='昨晚'
-        +sortedDeaths.map(i=>i+1).join(', ')
-        +'号出局';
+        settlementText='昨晚'
+            +sortedDeaths.map(i=>i+1).join(', ')
+            +'号出局';
 
     }else{
+
         settlementText='昨晚是平安夜';
+    }
+
+    if(bearResultBeforeNight!==null){
+
+        settlementText+=
+        bearResultBeforeNight
+        ?'，熊咆哮了'
+        :'，熊没有咆哮';
     }
 
     showConfirm("将进行今晚的结算",function(){
