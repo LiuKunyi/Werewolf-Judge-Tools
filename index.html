@@ -223,6 +223,9 @@ th,td{
     position:relative;
     text-align:center;
 }
+.numberCell{
+    text-align:center;
+}
 .numberCell .deadBtn{
     position:absolute;
     left:8px;
@@ -231,8 +234,8 @@ th,td{
     margin:0;
 }
 .playerNum{
-    display:block;
-    width:100%;
+    display:inline-block;
+    width:auto;
     text-align:center;
 }
 .markWrap{
@@ -240,10 +243,10 @@ th,td{
     right:6px;
     top:50%;
     transform:translateY(-50%);
-    width:72px;
+    max-width:72px;
+    min-width:20px;
     height:34px;
-
-    display:flex;
+    display:inline-flex;
     justify-content:flex-end;
     align-items:center;
 }
@@ -591,16 +594,14 @@ select option{
     cursor:pointer;
 
     transition:
-        transform .12s ease,
-        opacity .12s ease;
+        transform .08s ease,
+        filter .08s ease;
 }
 
 .roleCapsule:active{
-
     transform:scale(0.95);
+    filter:brightness(.85);
 }
-
-
 
 .goodCapsule{
     background:#739478;
