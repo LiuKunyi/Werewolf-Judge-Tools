@@ -1095,24 +1095,8 @@ function getNightOrderText(){
 	if(identities.includes("恶魔"))
         order.push("恶魔");
 	  
-	const wolfNightmared=
-identities.some((r,i)=>
-
-	    evilRoles.includes(r) &&
-	
-	    !deadPlayers.has(i) &&
-	
-	    hasMark(i,"nightmare")
-	);
-	
-	if(
-	    identities.some(r=>evilRoles.includes(r))
-	    &&
-	    !wolfNightmared
-	){
-	    options+=`<option value="wolfKill">🐺 狼刀目标</option>`;
-	}
-        order.push("狼人");
+		if(identities.some(r=>evilRoles.includes(r)))
+	    order.push("狼人");
 
     if(identities.includes("狼美人"))
         order.push("狼美人");
@@ -2158,9 +2142,23 @@ function buildMarkControl(index){
 
     `;
 
-    if(identities.some(r=>evilRoles.includes(r)))
-        options+=`<option value="wolfKill">🐺 狼刀目标</option>`;
-    
+	const wolfNightmared=
+	identities.some((r,i)=>
+	
+	    evilRoles.includes(r) &&
+	
+	    !deadPlayers.has(i) &&
+	
+	    hasMark(i,"nightmare")
+	);
+	
+	if(
+	    identities.some(r=>evilRoles.includes(r))
+	    &&
+	    !wolfNightmared
+	){
+	    options+=`<option value="wolfKill">🐺 狼刀目标</option>`;
+	}    
     if(roleAlive("魔术师"))
         options+=`<option value="magician">🎭 魔术师目标</option>`;
     
