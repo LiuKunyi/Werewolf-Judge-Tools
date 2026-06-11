@@ -2118,7 +2118,7 @@ function buildMarkControl(index){
 
         return (
             idx!==-1 &&
-	        deadPlayers.has(idx)&&
+	        !deadPlayers.has(idx) &&
             !hasMark(idx,"nightmare")
         );
     };
