@@ -1095,7 +1095,23 @@ function getNightOrderText(){
 	if(identities.includes("恶魔"))
         order.push("恶魔");
 	  
-	if(identities.some(r=>evilRoles.includes(r)))
+	const wolfNightmared=
+identities.some((r,i)=>
+
+	    evilRoles.includes(r) &&
+	
+	    !deadPlayers.has(i) &&
+	
+	    hasMark(i,"nightmare")
+	);
+	
+	if(
+	    identities.some(r=>evilRoles.includes(r))
+	    &&
+	    !wolfNightmared
+	){
+	    options+=`<option value="wolfKill">🐺 狼刀目标</option>`;
+	}
         order.push("狼人");
 
     if(identities.includes("狼美人"))
@@ -2102,7 +2118,8 @@ function buildMarkControl(index){
 
         return (
             idx!==-1 &&
-            !deadPlayers.has(idx)
+	        deadPlayers.has(idx)&&
+            !hasMark(idx,"nightmare")
         );
     };
 
@@ -2569,6 +2586,62 @@ function showSpeechPage(){
 	</span>
 	
 	</div>
+	
+	<div class="pageSubTitle">
+	身份表
+	</div>
+	
+	<table>
+	
+	<tr>
+	<th>编号</th>
+	<th>身份</th>
+	</tr>
+	
+	${identities.map((role,i)=>`
+	
+	<tr class="${deadPlayers.has(i)?'dead':''}">
+	
+	<td class="numberCell">
+	
+	<button
+	type="button"
+	class="deadBtn ${deadPlayers.has(i)?'deadActive':''}"
+	onclick="toggleDead(${i})">
+	</button>
+	
+	${buildMarkDisplay(i)}
+	
+	<span class="playerNum"
+	style="${
+	permanentMarked.has(i)
+	?'color:#b59b60;font-weight:bold;':''
+	}">
+	${i+1}号
+	</span>
+	
+	</td>
+	
+	<td class="roleCell">
+	
+	<span class="roleText">
+	${role}
+	</span>
+	
+	<span class="factionMark ${deadPlayers.has(i)?'gray':''}">
+	${factionSymbol(
+	getFactionAtIndex(i),
+	deadPlayers.has(i)
+	)}
+	</span>
+	
+	</td>
+	
+	</tr>
+	
+	`).join("")}
+	
+	</table>
 
     <div class="bottomSpacer"></div>
 
@@ -2620,6 +2693,62 @@ function startPKSpeech(players){
         </span>
 
     </div>
+    
+    <div class="pageSubTitle">
+	身份表
+	</div>
+	
+	<table>
+	
+	<tr>
+	<th>编号</th>
+	<th>身份</th>
+	</tr>
+	
+	${identities.map((role,i)=>`
+	
+	<tr class="${deadPlayers.has(i)?'dead':''}">
+	
+	<td class="numberCell">
+	
+	<button
+	type="button"
+	class="deadBtn ${deadPlayers.has(i)?'deadActive':''}"
+	onclick="toggleDead(${i})">
+	</button>
+	
+	${buildMarkDisplay(i)}
+	
+	<span class="playerNum"
+	style="${
+	permanentMarked.has(i)
+	?'color:#b59b60;font-weight:bold;':''
+	}">
+	${i+1}号
+	</span>
+	
+	</td>
+	
+	<td class="roleCell">
+	
+	<span class="roleText">
+	${role}
+	</span>
+	
+	<span class="factionMark ${deadPlayers.has(i)?'gray':''}">
+	${factionSymbol(
+	getFactionAtIndex(i),
+	deadPlayers.has(i)
+	)}
+	</span>
+	
+	</td>
+	
+	</tr>
+	
+	`).join("")}
+	
+	</table>
 
     <div class="bottomSpacer"></div>
 
@@ -2713,6 +2842,15 @@ function bearRoars(){
     if(deadPlayers.has(bearIndex)){
         return false;
     }
+    
+    if(
+	    hasMark(
+	        bearIndex,
+	        "nightmare"
+	    )
+	){
+	    return false;
+	}
 
     let left=bearIndex;
 
