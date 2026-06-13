@@ -17,11 +17,11 @@ content="狼人杀法官助手">
 <title>狼人杀法官助手</title>
 
 <style>
-
 body{
     margin:0;
-    padding:20px;
+    padding:20px 20px 0 20px;
     background:#1f2230;
+    overscroll-behavior-y:none;
     color:white;
     font-family:Arial;
     display:flex;
@@ -29,6 +29,26 @@ body{
     -webkit-user-select:none;
     user-select:none;
 	 touch-action:manipulation;
+    overflow-x:hidden;
+}
+
+.longContentContainer{
+    border-bottom-left-radius:0 !important;
+    border-bottom-right-radius:0 !important;
+}
+
+body.longContent::after{
+    content:"";
+    position:fixed;
+    left:50%;
+    transform:translateX(-50%);
+    width:calc(95% + 40px);
+    max-width:600px;
+    bottom:-120px;
+    height:220px;
+    background:#2a2d3d;
+    pointer-events:none;
+    z-index:-1;
 }
 
 .container{
@@ -36,7 +56,9 @@ body{
     max-width:560px;
     background:#2a2d3d;
     padding:20px;
+
     border-radius:18px;
+
     position:relative;
 }
 
@@ -501,7 +523,8 @@ select option{
 }
 
 .bottomSpacer{
-    height:calc(50px + 6mm);
+    height:0;
+    transition:.15s;
 }
 
 
@@ -592,6 +615,10 @@ select option{
     margin-top:5px;
 
     cursor:pointer;
+
+    touch-action:manipulation;
+
+    -webkit-tap-highlight-color:transparent;
 
     transition:
         transform .08s ease,
@@ -756,7 +783,64 @@ if(
 
 }
 
+function updatePageMode(){
 
+    const container=
+    document.querySelector(
+        ".container"
+    );
+
+    const spacer=
+    document.querySelector(
+        ".bottomSpacer"
+    );
+
+    if(!container){
+        return;
+    }
+
+    container.classList.remove(
+        "longContentContainer"
+    );
+
+    document.body.classList.remove(
+        "longContent"
+    );
+
+    if(spacer){
+        spacer.style.height="0px";
+    }
+
+    requestAnimationFrame(()=>{
+
+        const needScroll=
+
+            document.documentElement
+            .scrollHeight
+
+            >
+
+            window.innerHeight;
+
+            if(needScroll){
+
+                container.classList.add(
+                    "longContentContainer"
+                );
+
+                document.body.classList.add(
+                    "longContent"
+                );
+
+            if(spacer){
+
+                spacer.style.height=
+                "68px";
+            }
+        }
+
+    });
+}
 
 function showAlert(text){
     alert(text);
@@ -800,6 +884,10 @@ let night=1;
 let speechTimer=null;
 let speechSeconds=0;
 let speechTenths=0;
+let speechStartTime=0;
+let nightTimer=null;
+let nightSeconds=0;
+let nightStartTime=0;
 let nightMarks={};
 let magicianTargets=[];
 
@@ -915,6 +1003,7 @@ let controlRule=false;
 let setupRoles=[];
 let currentPreset="witch6";
 let showAvailableRoles=false;
+let playerNames=[];
 
 const presets={
     witch6:[
@@ -1961,14 +2050,25 @@ function toggleDead(index){
 function refreshCurrentPage(){
 
     if(currentPage==="settlement"){
-
         showDeathSettlementPage();
         return;
     }
 
     if(currentPage==="voteResult"){
-
         finishVoting();
+        return;
+    }
+
+    if(currentPage==="speech"){
+        showSpeechPage(false);
+        return;
+    }
+
+    if(currentPage==="pkSpeech"){
+        startPKSpeech(
+            window.pkPendingPlayers,
+            false
+        );
         return;
     }
 
@@ -2333,6 +2433,27 @@ function showIdentityTable(){
 	html+=getFactionStats();
 	
 	html+=getNightOrderText();
+
+    html+=`
+    <div
+    id="nightTimer"
+
+    onclick="restartNightTimer()"
+
+    style="
+    text-align:center;
+    font-size:28px;
+    color:#cfcfcf;
+    margin-top:4px;
+    margin-bottom:8px;
+    cursor:pointer;
+    user-select:none;
+    ">
+
+    00:00
+
+    </div>
+    `;
 	
 	html+=`
 	<div class="pageSubTitle">
@@ -2389,6 +2510,10 @@ function showIdentityTable(){
     html+=buildIdentityBottomButton(!!getWinText());
 
     document.getElementById("result").innerHTML=html;
+
+    updatePageMode();
+
+    restartNightTimer();
 }
 
 
@@ -2491,6 +2616,8 @@ function showDeathSettlementPage(){
     }
 
     document.getElementById("result").innerHTML=html;
+
+    updatePageMode();
 }
 
 function formatSpeechTime(sec){
@@ -2530,6 +2657,8 @@ function restartSpeechTimer(){
         clearInterval(speechTimer);
     }
 
+    speechStartTime=Date.now();
+
     speechSeconds=0;
     speechTenths=0;
 
@@ -2537,21 +2666,73 @@ function restartSpeechTimer(){
 
     speechTimer=setInterval(()=>{
 
-        speechTenths++;
+        const elapsed=
+        Date.now()-speechStartTime;
 
-        if(speechTenths>=10){
+        speechSeconds=
+        Math.floor(elapsed/1000);
 
-            speechTenths=0;
-            speechSeconds++;
-        }
+        speechTenths=
+        Math.floor(elapsed/100)%10;
 
         updateSpeechTimer();
 
     },100);
-
 }
 
-function showSpeechPage(){
+function updateNightTimer(){
+
+    const el=
+    document.getElementById(
+        "nightTimer"
+    );
+
+    if(!el)return;
+
+    const m=
+    String(
+        Math.floor(
+            nightSeconds/60
+        )
+    ).padStart(2,"0");
+
+    const s=
+    String(
+        nightSeconds%60
+    ).padStart(2,"0");
+
+    el.innerText=
+    m+":"+s;
+}
+
+function restartNightTimer(){
+
+    if(nightTimer){
+        clearInterval(nightTimer);
+    }
+
+    nightStartTime=Date.now();
+
+    nightSeconds=0;
+
+    updateNightTimer();
+
+    nightTimer=setInterval(()=>{
+
+        const elapsed=
+        Date.now()-nightStartTime;
+
+        nightSeconds=
+        Math.floor(elapsed/1000);
+
+        updateNightTimer();
+
+    },1000);
+}
+
+function showSpeechPage(resetTimer=true){
+
+    currentPage="speech";
     setPhaseTitle("白天");
 
     document.getElementById("playerText").innerText="";
@@ -2559,9 +2740,16 @@ function showSpeechPage(){
     document.getElementById("mainButton").classList.add("hidden");
     document.getElementById("nextButton").classList.add("hidden");
 
-    if(speechTimer) clearInterval(speechTimer);
-    speechTimer=null;
-    speechSeconds=0;
+    if(resetTimer){
+
+        if(speechTimer){
+            clearInterval(speechTimer);
+        }
+
+        speechTimer=null;
+        speechSeconds=0;
+        speechTenths=0;
+    }
 
     document.getElementById("result").innerHTML=`
     <div id="speechTimer"
@@ -2569,8 +2757,8 @@ function showSpeechPage(){
 	style="
 	text-align:center;
 	font-size:56px;
-	margin-top:75px;
-	margin-bottom:0;
+	margin-top:8px;
+	margin-bottom:8px;
 	user-select:none;
 	cursor:pointer;
 	">
@@ -2648,13 +2836,20 @@ function showSpeechPage(){
     结束发言环节
     </button>`;
 
+    updatePageMode();
+
+    if(resetTimer){
     restartSpeechTimer();
 }
+}
 
-function startPKSpeech(players){
+function startPKSpeech(
+    players,
+    resetTimer=true
+){
 
     window.pkPendingPlayers=players;
-
+    currentPage="pkSpeech";
     setPhaseTitle("白天");
 
     document.getElementById("playerText").innerText="";
@@ -2662,13 +2857,16 @@ function startPKSpeech(players){
     document.getElementById("mainButton").classList.add("hidden");
     document.getElementById("nextButton").classList.add("hidden");
 
-    if(speechTimer){
-        clearInterval(speechTimer);
-    }
+    if(resetTimer){
 
-    speechTimer=null;
-    speechSeconds=0;
-    speechTenths=0;
+        if(speechTimer){
+            clearInterval(speechTimer);
+        }
+
+        speechTimer=null;
+        speechSeconds=0;
+        speechTenths=0;
+    }
 
     document.getElementById("result").innerHTML=`
     <div id="speechTimer"
@@ -2676,8 +2874,8 @@ function startPKSpeech(players){
     style="
     text-align:center;
     font-size:56px;
-    margin-top:75px;
-    margin-bottom:0;
+    margin-top:8px;
+    margin-bottom:8px;
     user-select:none;
     cursor:pointer;
     ">
@@ -2757,7 +2955,11 @@ function startPKSpeech(players){
     </button>
     `;
 
-    restartSpeechTimer();
+    updatePageMode();
+
+    if(resetTimer){
+        restartSpeechTimer();
+    }
 }
 
 function confirmEnterPKVote(){
@@ -3210,26 +3412,38 @@ function renderVoteSelectPage(){
     html+=`</div>`;
 
     html+=`
-<div class="bottomSpacer"></div>
+    <div class="bottomSpacer"></div>
 
-${
-voteFinishedPlayers.length===0
-?
-`<button
-class="bottomCapsuleBtn gold fixedBottomBtn"
-onclick="confirmSkipNight()">
-进入下一晚
-</button>`
-:
-`<button
-class="bottomCapsuleBtn gold fixedBottomBtn"
-onclick="checkVoteResult()">
-查看投票结果
-</button>`
-}
-`;
+    ${
+    isPKVote
+    ?
+    `<button
+    class="bottomCapsuleBtn gold fixedBottomBtn"
+    onclick="checkVoteResult()">
+    查看投票结果
+    </button>`
+    :
+    (
+    voteFinishedPlayers.length===0
+    ?
+    `<button
+    class="bottomCapsuleBtn gold fixedBottomBtn"
+    onclick="confirmSkipNight()">
+    进入下一晚
+    </button>`
+    :
+    `<button
+    class="bottomCapsuleBtn gold fixedBottomBtn"
+    onclick="checkVoteResult()">
+    查看投票结果
+    </button>`
+    )
+    }
+    `;
 
     document.getElementById("result").innerHTML=html;
+
+    updatePageMode();
 }
 
 
@@ -3382,6 +3596,8 @@ function showVotePage(){
     `<div>`+
     html+
     `</div>`;
+
+    updatePageMode();
 }
 
 function selectVote(target){
@@ -3811,6 +4027,8 @@ if(isPKVote){
 
     document.getElementById("result")
     .innerHTML=html;
+
+    updatePageMode();
 }
 
 
